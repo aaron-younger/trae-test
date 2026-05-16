@@ -1,5 +1,12 @@
 import { Course, VocabularyWord, Achievement, CommunityPost } from '../types';
 
+// 使用内联 SVG 作为课程图片
+const courseImages: Record<string, string> = {
+  english: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"%3E%3Crect fill="%233b82f6" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-size="48" fill="white"%3E🇺🇸 English%3C/text%3E%3C/svg%3E',
+  japanese: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"%3E%3Crect fill="%23ef4444" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-size="48" fill="white"%3E🇯🇵 日本語%3C/text%3E%3C/svg%3E',
+  korean: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"%3E%3Crect fill="%2310b981" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-size="48" fill="white"%3E🇰🇷 한국어%3C/text%3E%3C/svg%3E',
+};
+
 export const mockCourses: Course[] = [
   {
     id: '1',
@@ -7,7 +14,7 @@ export const mockCourses: Course[] = [
     description: '从零开始学习英语基础',
     language: 'english',
     level: 'beginner',
-    imageUrl: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=400',
+    imageUrl: courseImages.english,
     lessons: 24,
     duration: '12小时',
     students: 15000,
@@ -18,7 +25,7 @@ export const mockCourses: Course[] = [
     description: '学习日语的五十音图和基础语法',
     language: 'japanese',
     level: 'beginner',
-    imageUrl: 'https://images.unsplash.com/photo-1528164344705-47542687000d?w=400',
+    imageUrl: courseImages.japanese,
     lessons: 30,
     duration: '15小时',
     students: 12000,
@@ -29,7 +36,7 @@ export const mockCourses: Course[] = [
     description: '学习韩语字母和日常用语',
     language: 'korean',
     level: 'beginner',
-    imageUrl: 'https://images.unsplash.com/photo-1534067783741-513be911c79c?w=400',
+    imageUrl: courseImages.korean,
     lessons: 20,
     duration: '10小时',
     students: 8000,
@@ -40,7 +47,7 @@ export const mockCourses: Course[] = [
     description: '提高英语听说读写能力',
     language: 'english',
     level: 'intermediate',
-    imageUrl: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=400',
+    imageUrl: courseImages.english,
     lessons: 32,
     duration: '16小时',
     students: 9000,
@@ -143,7 +150,6 @@ export const mockCommunityPosts: CommunityPost[] = [
     id: '1',
     userId: 'user1',
     userName: '李明',
-    userAvatar: 'https://i.pravatar.cc/150?img=1',
     content: '刚刚完成了英语入门课程，感觉进步很大！分享一下我的学习心得...',
     language: 'english',
     likes: 42,
@@ -154,7 +160,6 @@ export const mockCommunityPosts: CommunityPost[] = [
     id: '2',
     userId: 'user2',
     userName: '樱子',
-    userAvatar: 'https://i.pravatar.cc/150?img=2',
     content: '日语五十音图好难记啊，大家有什么好方法吗？',
     language: 'japanese',
     likes: 28,
@@ -165,7 +170,6 @@ export const mockCommunityPosts: CommunityPost[] = [
     id: '3',
     userId: 'user3',
     userName: '哲秀',
-    userAvatar: 'https://i.pravatar.cc/150?img=3',
     content: '韩语发音练习了一个月，终于找到感觉了！加油！',
     language: 'korean',
     likes: 35,

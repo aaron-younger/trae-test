@@ -166,16 +166,19 @@ const Community = () => {
             <div className="bg-white rounded-3xl p-6 shadow-lg">
               <h3 className="font-bold text-gray-900 mb-4">活跃用户</h3>
               <div className="space-y-4">
-                {[1, 2, 3, 4].map(i => (
+                {[
+                  { name: '张小明', initial: '张', streak: 8 },
+                  { name: '李华', initial: '李', streak: 9 },
+                  { name: '王芳', initial: '王', streak: 10 },
+                  { name: '刘伟', initial: '刘', streak: 11 },
+                ].map((user, i) => (
                   <div key={i} className="flex items-center gap-3">
-                    <img
-                      src={`https://i.pravatar.cc/150?img=${i + 10}`}
-                      alt="用户"
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm">
+                      {user.initial}
+                    </div>
                     <div className="flex-1">
-                      <div className="font-medium text-gray-900">学习者{i}</div>
-                      <div className="text-sm text-gray-500">连续学习 {i + 7} 天</div>
+                      <div className="font-medium text-gray-900">{user.name}</div>
+                      <div className="text-sm text-gray-500">连续学习 {user.streak} 天</div>
                     </div>
                     <button className="text-indigo-600 font-medium text-sm hover:text-indigo-700">
                       关注

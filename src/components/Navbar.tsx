@@ -51,13 +51,9 @@ const Navbar = () => {
           <div className="hidden md:flex items-center space-x-4">
             {isAuthenticated ? (
               <div className="flex items-center space-x-4">
-                {user?.avatarUrl && (
-                  <img
-                    src={user.avatarUrl}
-                    alt="头像"
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
-                )}
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold">
+                  {user?.name.charAt(0).toUpperCase()}
+                </div>
                 <span className="text-gray-700 font-medium">{user?.name}</span>
                 <button
                   onClick={handleLogout}
@@ -137,6 +133,17 @@ const Navbar = () => {
               </Link>
             )}
             <div className="pt-4 border-t">
+              {isAuthenticated ? (
+                <div className="mb-4 flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold">
+                    {user?.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">{user?.name}</p>
+                    <p className="text-sm text-gray-500">{user?.email}</p>
+                  </div>
+                </div>
+              ) : null}
               {isAuthenticated ? (
                 <button
                   onClick={() => {
