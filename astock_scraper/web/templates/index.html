@@ -1382,6 +1382,33 @@
             filterAndRender();
         }
 
+        function sortStocks() {
+            const sortValue = document.getElementById('sortSelect').value;
+            sortField = sortValue;
+            sortAsc = true;
+            filteredStocks.sort((a, b) => {
+                let valA = a[sortField];
+                let valB = b[sortField];
+
+                if (sortField === 'marketValue') {
+                    valA = a.market_value || 0;
+                    valB = b.market_value || 0;
+                }
+
+                if (typeof valA === 'string') {
+                    valA = valA.toLowerCase();
+                    valB = valB?.toLowerCase() || '';
+                }
+
+                if (valA < valB) return sortAsc ? -1 : 1;
+                if (valA > valB) return sortAsc ? 1 : -1;
+                return 0;
+            });
+
+            currentPage = 1;
+            filterAndRender();
+        }
+
         function filterAndRender() {
             const totalPages = Math.ceil(filteredStocks.length / pageSize);
             const start = (currentPage - 1) * pageSize;
