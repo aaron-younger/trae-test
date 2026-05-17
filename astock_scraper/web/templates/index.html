@@ -476,7 +476,7 @@
         }
 
         .chart-container {
-            height: 280px;
+            height: 320px;
             background: var(--bg-tertiary);
             border-radius: 8px;
             overflow: hidden;
@@ -496,28 +496,6 @@
             width: 48px;
             height: 48px;
             opacity: 0.3;
-        }
-
-        .chart-legend {
-            padding: 10px 12px;
-            background: var(--bg-tertiary);
-            border-radius: 6px;
-            margin-top: 10px;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 3px 0;
-            font-size: 11px;
-            color: var(--text-secondary);
-        }
-
-        .legend-color {
-            width: 16px;
-            height: 3px;
-            border-radius: 2px;
         }
 
         .industry-list {
@@ -1021,24 +999,6 @@
                                 <span>点击股票查看趋势图</span>
                             </div>
                         </div>
-                        <div id="chartLegend" class="chart-legend" style="display: none;">
-                            <div class="legend-item">
-                                <span class="legend-color" style="background: #ef4444;"></span>
-                                <span>K线(红涨绿跌)</span>
-                            </div>
-                            <div class="legend-item">
-                                <span class="legend-color" style="background: #f59e0b;"></span>
-                                <span>MA5</span>
-                            </div>
-                            <div class="legend-item">
-                                <span class="legend-color" style="background: #6366f1;"></span>
-                                <span>MA10</span>
-                            </div>
-                            <div class="legend-item">
-                                <span class="legend-color" style="background: #8b5cf6;"></span>
-                                <span>MA20</span>
-                            </div>
-                        </div>
                         <div id="selectedStockInfo" class="analysis-panel" style="display: none;"></div>
                     </div>
                 </div>
@@ -1523,9 +1483,6 @@
             };
 
             Plotly.newPlot(container, traces, layout, {responsive: true});
-            
-            const chartLegend = document.getElementById('chartLegend');
-            if (chartLegend) chartLegend.style.display = 'block';
         }
 
         async function renderStockInfo(code) {
@@ -1647,7 +1604,6 @@
                     if (selectedStockCode === code) {
                         selectedStockCode = null;
                         document.getElementById('chartPlaceholder').style.display = 'flex';
-                        document.getElementById('chartLegend').style.display = 'none';
                         document.getElementById('selectedStockInfo').style.display = 'none';
                         document.getElementById('chartTitle').textContent = '价格趋势图';
                     }
