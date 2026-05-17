@@ -469,6 +469,49 @@
             background: rgba(239, 68, 68, 0.2);
         }
 
+        .favorite-btn {
+            width: 28px;
+            height: 28px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            background: transparent;
+        }
+
+        .favorite-btn:hover {
+            background: rgba(251, 191, 36, 0.1);
+            transform: scale(1.2);
+        }
+
+        .favorite-btn.active {
+            background: rgba(251, 191, 36, 0.1);
+        }
+
+        .filter-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
+        }
+
+        .filter-btn:hover {
+            background: var(--bg-secondary);
+        }
+
+        .filter-btn.active {
+            background: var(--accent-primary);
+            color: white;
+            border-color: var(--accent-primary);
+        }
+
         .sidebar {
             display: flex;
             flex-direction: column;
@@ -953,6 +996,7 @@
                 <option value="谨慎">谨慎</option>
                 <option value="回避">回避</option>
             </select>
+            <button class="filter-btn" id="toggleFavoritesBtn" onclick="toggleShowFavorites()">只看关注</button>
             <select class="filter-select" id="sortSelect" onchange="sortStocks()">
                 <option value="industry">按行业</option>
                 <option value="code">按代码</option>
@@ -976,6 +1020,7 @@
                     <table>
                         <thead>
                             <tr>
+                                <th>关注</th>
                                 <th onclick="sortBy('code')">代码 <span class="sort-icon">↕</span></th>
                                 <th onclick="sortBy('name')">名称 <span class="sort-icon">↕</span></th>
                                 <th onclick="sortBy('price')">现价 <span class="sort-icon">↕</span></th>
@@ -1078,6 +1123,8 @@
         let pageSize = 20;
         let sortField = 'industry';
         let sortAsc = true;
+        let favorites = [];
+        let showOnlyFavorites = false;
         let selectedStockCode = null;
 
         const API_BASE = '/api';
@@ -1196,6 +1243,10 @@
         function applyFilters(industry = null, recommendation = null) {
             let filtered = [...stocks];
 
+            if (showOnlyFavorites) {
+                filtered = filtered.filter(s => favorites.includes(s.code));
+            }
+
             if (industry) {
                 filtered = filtered.filter(s => s.industry === industry);
             }
@@ -1210,6 +1261,51 @@
             filteredStocks = filtered;
             currentPage = 1;
             filterAndRender();
+        }
+
+        function toggleFavorite(code) {
+            const index = favorites.indexOf(code);
+            if (index > -1) {
+                favorites.splice(index, 1);
+            } else {
+                favorites.push(code);
+            }
+            
+            localStorage.setItem('stockFavorites', JSON.stringify(favorites));
+            updateFavoriteButton(code);
+        }
+
+        function updateFavoriteButton(code) {
+            const btn = document.querySelector(`button.favorite-btn[data-code="${code}"]`);
+            if (btn) {
+                const isFavorite = favorites.includes(code);
+                btn.classList.toggle('active', isFavorite);
+                btn.setAttribute('title', isFavorite ? '取消关注' : '添加关注');
+                const svg = btn.querySelector('svg');
+                if (svg) {
+                    svg.setAttribute('fill', isFavorite ? '#fbbf24' : 'none');
+                    svg.setAttribute('stroke', isFavorite ? '#fbbf24' : '#9ca3af');
+                }
+            }
+        }
+
+        function toggleShowFavorites() {
+            showOnlyFavorites = !showOnlyFavorites;
+            const btn = document.getElementById('toggleFavoritesBtn');
+            if (btn) {
+                btn.classList.toggle('active', showOnlyFavorites);
+                btn.textContent = showOnlyFavorites ? '显示全部' : '只看关注';
+            }
+            const industry = document.getElementById('industryFilter').value;
+            const recommendation = document.getElementById('recommendationFilter').value;
+            applyFilters(industry, recommendation);
+        }
+
+        function loadFavorites() {
+            const saved = localStorage.getItem('stockFavorites');
+            if (saved) {
+                favorites = JSON.parse(saved);
+            }
         }
 
         function handleSearch(event) {
@@ -1316,7 +1412,7 @@
             if (data.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="9">
+                        <td colspan="10">
                             <div class="empty-state">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
@@ -1337,9 +1433,17 @@
                 const rec = stock.analysis?.recommendation || 'N/A';
                 const recClass = getRecommendationClass(rec);
                 const isSelected = selectedStockCode === stock.code;
+                const isFavorite = favorites.includes(stock.code);
 
                 return `
                     <tr onclick="selectStock('${stock.code}')" style="cursor: pointer;" class="${isSelected ? 'selected' : ''}">
+                        <td style="text-align: center;">
+                            <button class="favorite-btn ${isFavorite ? 'active' : ''}" onclick="event.stopPropagation(); toggleFavorite('${stock.code}')" title="${isFavorite ? '取消关注' : '添加关注'}">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="${isFavorite ? '#fbbf24' : 'none'}" stroke="${isFavorite ? '#fbbf24' : '#9ca3af'}" stroke-width="2">
+                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                </svg>
+                            </button>
+                        </td>
                         <td><span class="stock-code">${stock.code}</span></td>
                         <td><span class="stock-name">${stock.name || '未知'}</span></td>
                         <td><span class="price">${stock.price ? stock.price.toFixed(2) : 'N/A'}</span></td>
@@ -1731,6 +1835,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            loadFavorites();
             loadStocks();
         });
     </script>
