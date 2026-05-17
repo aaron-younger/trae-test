@@ -217,17 +217,17 @@
         }
 
         .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            display: flex;
             gap: 12px;
-            margin-bottom: 24px;
+            margin-bottom: 16px;
         }
 
         .stat-card {
+            flex: 1;
             background: var(--bg-card);
             border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 12px 16px;
+            border-radius: 6px;
+            padding: 10px 14px;
             position: relative;
             overflow: hidden;
         }
@@ -245,24 +245,19 @@
         .stat-label {
             font-size: 11px;
             color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
 
         .stat-value {
-            font-size: 20px;
+            font-size: 16px;
             font-weight: 700;
             color: var(--text-primary);
             font-family: 'JetBrains Mono', monospace;
         }
 
         .stat-change {
-            font-size: 11px;
-            margin-top: 4px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
+            font-size: 10px;
+            margin-top: 2px;
             color: var(--text-muted);
         }
 
@@ -941,17 +936,17 @@
             <div class="stat-card">
                 <div class="stat-label">股票总数</div>
                 <div class="stat-value" id="totalStocks">0</div>
-                <div class="stat-change positive">已采集</div>
+                <div class="stat-change">已采集</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">行业覆盖</div>
                 <div class="stat-value" id="totalIndustries">0</div>
-                <div class="stat-change positive">个行业</div>
+                <div class="stat-change">个行业</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">推荐买入</div>
                 <div class="stat-value" id="buyCount">0</div>
-                <div class="stat-change positive">只股票</div>
+                <div class="stat-change">只股票</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">数据更新</div>
@@ -966,7 +961,7 @@
                     <circle cx="11" cy="11" r="8"></circle>
                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                 </svg>
-                <input type="text" class="search-input" id="searchInput" placeholder="搜索股票代码、名称、行业..." onkeyup="handleSearch(event)">
+                <input type="text" class="search-input" id="searchInput" placeholder="搜索股票代码、名称..." onkeyup="handleSearch(event)">
             </div>
             <select class="filter-select" id="industryFilter" onchange="filterByIndustry()">
                 <option value="">全行业</option>
@@ -976,6 +971,11 @@
                 <option value="code">按代码</option>
                 <option value="name">按名称</option>
                 <option value="price">按价格</option>
+            </select>
+            <select class="filter-select" id="pageSizeSelect" onchange="changePageSize()">
+                <option value="20">20行/页</option>
+                <option value="30">30行/页</option>
+                <option value="50">50行/页</option>
             </select>
         </div>
 
@@ -994,7 +994,6 @@
                                 <th onclick="sortBy('price')">现价 <span class="sort-icon">↕</span></th>
                                 <th onclick="sortBy('marketValue')">市值 <span class="sort-icon">↕</span></th>
                                 <th onclick="sortBy('industry')">行业 <span class="sort-icon">↕</span></th>
-                                <th>细分行业</th>
                                 <th>概念</th>
                                 <th>推荐</th>
                                 <th>操作</th>
@@ -1103,7 +1102,7 @@
         let stocks = [];
         let filteredStocks = [];
         let currentPage = 1;
-        const pageSize = 10;
+        let pageSize = 20;
         let sortField = 'industry';
         let sortAsc = true;
         let selectedStockCode = null;
@@ -1225,7 +1224,6 @@
                         s.code.toLowerCase().includes(keyword) ||
                         (s.name && s.name.toLowerCase().includes(keyword)) ||
                         (s.industry && s.industry.toLowerCase().includes(keyword)) ||
-                        (s.sub_industry && s.sub_industry.toLowerCase().includes(keyword)) ||
                         (s.concepts && s.concepts.toLowerCase().includes(keyword))
                     );
                 } else {
@@ -1234,6 +1232,12 @@
                 currentPage = 1;
                 filterAndRender();
             }
+        }
+
+        function changePageSize() {
+            pageSize = parseInt(document.getElementById('pageSizeSelect').value);
+            currentPage = 1;
+            filterAndRender();
         }
 
         function sortBy(field) {
@@ -1331,8 +1335,6 @@
                 const rec = stock.analysis?.recommendation || 'N/A';
                 const recClass = getRecommendationClass(rec);
                 const isSelected = selectedStockCode === stock.code;
-                const oppPoints = stock.analysis?.opportunity_points || [];
-                const oppArray = Array.isArray(oppPoints) ? oppPoints : String(oppPoints).split(',').filter(p => p.trim());
 
                 return `
                     <tr onclick="selectStock('${stock.code}')" style="cursor: pointer;" class="${isSelected ? 'selected' : ''}">
@@ -1341,25 +1343,15 @@
                         <td><span class="price">${stock.price ? stock.price.toFixed(2) : 'N/A'}</span></td>
                         <td style="text-align: right; font-family: 'JetBrains Mono', monospace;">${stock.market_value ? stock.market_value.toFixed(2) : 'N/A'}</td>
                         <td>${stock.industry || 'N/A'}</td>
-                        <td><span class="sub-industry-tag">${stock.sub_industry || '-'}</span></td>
                         <td>${concepts.map(c => `<span class="tag">${c}</span>`).join('')}</td>
                         <td><span class="recommendation ${recClass}">${rec}</span></td>
                         <td>
-                            <div class="action-btns" onclick="event.stopPropagation();">
-                                <button class="action-btn chart" onclick="viewChart('${stock.code}')" title="图表">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <line x1="18" y1="20" x2="18" y2="10"></line>
-                                        <line x1="12" y1="20" x2="12" y2="4"></line>
-                                        <line x1="6" y1="20" x2="6" y2="14"></line>
-                                    </svg>
-                                </button>
-                                <button class="action-btn delete" onclick="deleteStock('${stock.code}')" title="删除">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <polyline points="3 6 5 6 21 6"></polyline>
-                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                    </svg>
-                                </button>
-                            </div>
+                            <button class="action-btn delete" onclick="deleteStock('${stock.code}')" title="删除">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                </svg>
+                            </button>
                         </td>
                     </tr>
                 `;
