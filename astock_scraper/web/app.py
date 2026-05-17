@@ -195,12 +195,109 @@ def get_chart(code):
     stock = db.get_stock(code)
     
     base_price = stock.price if stock and stock.price else 10.0
-    chart_json = chart_gen.get_chart_json(code, stock.name if stock else None, days, base_price)
+    chart_data = get_real_kline_data(code, days, base_price)
     
     return jsonify({
         "success": True,
-        "data": json.loads(chart_json)
+        "data": chart_data
     })
+
+def get_real_kline_data(code: str, days: int = 30, base_price: float = None) -> dict:
+    """从腾讯财经获取真实日K线数据"""
+    import requests
+    
+    if not code.startswith(("sh", "sz", "bj")):
+        if code.startswith("6") or code.startswith("688"):
+            code = f"sh{code}"
+        elif code.startswith("8"):
+            code = f"bj{code}"
+        else:
+            code = f"sz{code}"
+    
+    url = f"https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?_var=kline_dayqfq&param={code},day,,,{days},qfq"
+    
+    try:
+        response = requests.get(url, timeout=10)
+        data_text = response.text
+        
+        if "kline_dayqfq" in data_text:
+            data_text = data_text[data_text.index("=") + 1:]
+        
+        data = json.loads(data_text)
+        
+        qfqday = data.get("data", {}).get(code, {}).get("qfqday", [])
+        
+        if not qfqday:
+            qfqday = data.get("data", {}).get(code, {}).get("day", [])
+        
+        if qfqday and len(qfqday) > 0:
+            stock = db.get_stock(code[2:] if code.startswith(("sh", "sz", "bj")) else code)
+            
+            dates = []
+            opens = []
+            highs = []
+            lows = []
+            closes = []
+            volumes = []
+            
+            for candle in qfqday[-days:]:
+                if len(candle) >= 6:
+                    dates.append(candle[0])
+                    opens.append(float(candle[1]))
+                    closes.append(float(candle[2]))
+                    highs.append(float(candle[3]))
+                    lows.append(float(candle[4]))
+                    vol_str = candle[5] if candle[5] else "0"
+                    volumes.append(int(float(vol_str)))
+            
+            current_price = closes[-1] if closes else base_price
+            
+            ma5 = calculate_ma(closes, 5)
+            ma10 = calculate_ma(closes, 10)
+            ma20 = calculate_ma(closes, 20)
+            
+            return {
+                "code": code[2:] if code.startswith(("sh", "sz", "bj")) else code,
+                "name": stock.name if stock else code,
+                "currentPrice": current_price,
+                "dates": dates,
+                "prices": {
+                    "open": opens,
+                    "high": highs,
+                    "low": lows,
+                    "close": closes
+                },
+                "volumes": volumes,
+                "ma": {
+                    "ma5": ma5,
+                    "ma10": ma10,
+                    "ma20": ma20
+                }
+            }
+    except Exception as e:
+        print(f"获取K线数据失败: {e}")
+    
+    stock = db.get_stock(code[2:] if code.startswith(("sh", "sz", "bj")) else code)
+    return {
+        "code": code[2:] if code.startswith(("sh", "sz", "bj")) else code,
+        "name": stock.name if stock else code,
+        "currentPrice": base_price,
+        "dates": [],
+        "prices": {"open": [], "high": [], "low": [], "close": []},
+        "volumes": [],
+        "ma": {"ma5": [], "ma10": [], "ma20": []}
+    }
+
+def calculate_ma(prices: list, period: int) -> list:
+    """计算移动平均线"""
+    ma = []
+    for i in range(len(prices)):
+        if i < period - 1:
+            ma.append(None)
+        else:
+            ma_value = sum(prices[i - period + 1:i + 1]) / period
+            ma.append(round(ma_value, 2))
+    return ma
 
 @app.route("/api/stocks/<code>/analyze", methods=["POST"])
 def analyze_stock(code):
