@@ -433,15 +433,16 @@
         .action-btn {
             width: 32px;
             height: 32px;
-            border: none;
+            border: 1px solid var(--border-color);
             border-radius: 6px;
             cursor: pointer;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
             transition: all 0.2s ease;
             background: var(--bg-tertiary);
             color: var(--text-secondary);
+            margin: 0 2px;
         }
 
         .action-btn:hover {
@@ -458,9 +459,19 @@
             color: var(--accent-yellow);
         }
 
+        .action-btn.delete {
+            color: var(--accent-red);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
         .action-btn.delete:hover {
             background: rgba(239, 68, 68, 0.2);
-            color: var(--accent-red);
+        }
+        
+        .action-btns {
+            display: flex;
+            gap: 4px;
+            align-items: center;
         }
 
         .sidebar {
@@ -627,6 +638,12 @@
             outline: none;
             border-color: var(--accent-primary);
             box-shadow: 0 0 0 3px rgba(0, 212, 170, 0.1);
+        }
+
+        textarea.form-input {
+            resize: vertical;
+            min-height: 120px;
+            font-family: 'JetBrains Mono', monospace;
         }
 
         .form-actions {
@@ -891,10 +908,11 @@
                 </button>
                 <button class="btn btn-primary" onclick="openAddModal()">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
                     </svg>
-                    添加股票
+                    导入数据
                 </button>
                 <button class="btn btn-secondary" onclick="scrapeData()">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -986,7 +1004,7 @@
                                 <th onclick="sortBy('industry')">行业 <span class="sort-icon">↕</span></th>
                                 <th>概念</th>
                                 <th>推荐</th>
-                                <th>操作</th>
+                                <th>图表</th>
                             </tr>
                         </thead>
                         <tbody id="stockTableBody">
@@ -1030,25 +1048,33 @@
     <div class="modal-overlay" id="addModal">
         <div class="modal">
             <div class="modal-header">
-                <h2 class="modal-title" id="modalTitle">添加股票</h2>
+                <h2 class="modal-title" id="modalTitle">批量导入股票</h2>
                 <button class="modal-close" onclick="closeModal()">✕</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label class="form-label">股票代码 *</label>
-                    <input type="text" class="form-input" id="stockCode" placeholder="例如: 000001">
+                    <label class="form-label">股票代码（每行一个或逗号分隔）</label>
+                    <textarea class="form-input" id="stockCodes" rows="6" placeholder="示例：
+000001
+000002
+600519
+000858
+601318
+
+或：000001, 000002, 600519"></textarea>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">股票名称</label>
-                    <input type="text" class="form-input" id="stockName" placeholder="例如: 平安银行">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">关键词搜索</label>
-                    <input type="text" class="form-input" id="searchKeyword" placeholder="输入关键词搜索相关股票">
+                    <label class="form-label">导入说明</label>
+                    <p style="color: var(--text-muted); font-size: 12px; line-height: 1.6;">
+                        支持两种格式：<br>
+                        1. 每行一个股票代码<br>
+                        2. 逗号分隔的股票代码列表<br><br>
+                        导入后将自动从腾讯财经/同花顺获取股票信息并进行智能分析。
+                    </p>
                 </div>
                 <div class="form-actions">
                     <button class="btn btn-secondary" onclick="closeModal()">取消</button>
-                    <button class="btn btn-primary" onclick="saveStock()">保存</button>
+                    <button class="btn btn-primary" onclick="batchImport()">开始导入</button>
                 </div>
             </div>
         </div>
@@ -1276,23 +1302,17 @@
                         <td><span class="stock-code">${stock.code}</span></td>
                         <td><span class="stock-name">${stock.name || '未知'}</span></td>
                         <td><span class="price">${stock.price ? stock.price.toFixed(2) : 'N/A'}</span></td>
-                        <td>${stock.market_value ? (stock.market_value / 1e8).toFixed(2) : 'N/A'}</td>
+                        <td style="text-align: right; font-family: 'JetBrains Mono', monospace;">${stock.market_value ? stock.market_value.toFixed(2) : 'N/A'}</td>
                         <td>${stock.industry || 'N/A'}</td>
                         <td>${concepts.map(c => `<span class="tag">${c}</span>`).join('')}</td>
                         <td><span class="recommendation ${recClass}">${rec}</span></td>
-                        <td>
+                        <td style="max-width: 120px;">
                             <div class="action-btns" onclick="event.stopPropagation();">
                                 <button class="action-btn chart" onclick="viewChart('${stock.code}')" title="查看图表">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <line x1="18" y1="20" x2="18" y2="10"></line>
                                         <line x1="12" y1="20" x2="12" y2="4"></line>
                                         <line x1="6" y1="20" x2="6" y2="14"></line>
-                                    </svg>
-                                </button>
-                                <button class="action-btn edit" onclick="editStock('${stock.code}')" title="编辑">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                                     </svg>
                                 </button>
                                 <button class="action-btn delete" onclick="deleteStock('${stock.code}')" title="删除">
@@ -1360,7 +1380,6 @@
         async function selectStock(code) {
             selectedStockCode = code;
             filterAndRender();
-            await viewChart(code);
         }
 
         async function viewChart(code) {
@@ -1469,28 +1488,18 @@
                         <span class="analysis-label">核心风险</span>
                         <div>${(stock.analysis.core_risks || '').split(',').filter(r => r).map(r => `<span class="tag" style="background: rgba(239, 68, 68, 0.2); color: var(--accent-red);">${r}</span>`).join('')}</div>
                     </div>
+                    ${stock.analysis.recommendation_source ? `
+                    <div class="analysis-item" style="flex-direction: column; gap: 4px; margin-top: 8px;">
+                        <span class="analysis-label" style="font-size: 10px; color: var(--text-muted);">${stock.analysis.recommendation_source}</span>
+                    </div>
+                    ` : ''}
                 ` : '<p style="color: var(--text-muted); font-size: 13px;">点击"更新数据"获取分析结果</p>'}
             `;
         }
 
         function openAddModal() {
-            document.getElementById('modalTitle').textContent = '添加股票';
-            document.getElementById('stockCode').value = '';
-            document.getElementById('stockName').value = '';
-            document.getElementById('searchKeyword').value = '';
-            document.getElementById('stockCode').disabled = false;
-            document.getElementById('addModal').classList.add('active');
-        }
-
-        function editStock(code) {
-            const stock = stocks.find(s => s.code === code);
-            if (!stock) return;
-
-            document.getElementById('modalTitle').textContent = '编辑股票';
-            document.getElementById('stockCode').value = code;
-            document.getElementById('stockCode').disabled = true;
-            document.getElementById('stockName').value = stock.name || '';
-            document.getElementById('searchKeyword').value = '';
+            document.getElementById('modalTitle').textContent = '批量导入股票';
+            document.getElementById('stockCodes').value = '';
             document.getElementById('addModal').classList.add('active');
         }
 
@@ -1498,48 +1507,51 @@
             document.getElementById('addModal').classList.remove('active');
         }
 
-        async function saveStock() {
-            const code = document.getElementById('stockCode').value.trim();
-            const name = document.getElementById('stockName').value.trim();
-            const keyword = document.getElementById('searchKeyword').value.trim();
+        async function batchImport() {
+            const codesText = document.getElementById('stockCodes').value.trim();
+            
+            if (!codesText) {
+                showToast('请输入股票代码', 'error');
+                return;
+            }
 
-            if (!code && !keyword) {
-                showToast('请输入股票代码或搜索关键词', 'error');
+            let codes = [];
+            const lines = codesText.split(/[\n,，]/);
+            for (let line of lines) {
+                const code = line.trim().replace(/[^0-9]/g, '');
+                if (code && code.length === 6) {
+                    codes.push(code);
+                }
+            }
+
+            if (codes.length === 0) {
+                showToast('未找到有效的股票代码（需要6位数字）', 'error');
                 return;
             }
 
             try {
-                showLoading('正在保存...');
+                showLoading(`正在导入 ${codes.length} 只股票...`);
                 
-                let response;
-                if (keyword) {
-                    response = await fetch(`${API_BASE}/stocks/search`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ keyword })
-                    });
-                } else {
-                    response = await fetch(`${API_BASE}/stocks`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ code, name })
-                    });
-                }
-
+                const response = await fetch(`${API_BASE}/stocks/scrape`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ codes: codes })
+                });
+                
                 const result = await response.json();
                 
                 if (result.success) {
                     await loadStocks();
                     closeModal();
-                    showToast('保存成功', 'success');
+                    showToast(`成功导入 ${result.total} 只股票`, 'success');
                 } else {
-                    showToast(result.error || '保存失败', 'error');
+                    showToast(result.error || '导入失败', 'error');
                 }
                 hideLoading();
             } catch (error) {
-                console.error('保存失败:', error);
+                console.error('导入失败:', error);
                 hideLoading();
-                showToast('保存失败', 'error');
+                showToast('导入失败', 'error');
             }
         }
 
@@ -1596,7 +1608,7 @@
                 s.code,
                 s.name,
                 s.price || '',
-                s.market_value ? (s.market_value / 1e8).toFixed(2) : '',
+                s.market_value || '',
                 s.industry || '',
                 s.sub_industry || '',
                 s.concepts || '',

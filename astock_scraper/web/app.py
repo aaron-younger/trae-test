@@ -177,7 +177,8 @@ def get_chart(code):
     days = int(request.args.get("days", 30))
     stock = db.get_stock(code)
     
-    chart_json = chart_gen.get_chart_json(code, stock.name if stock else None, days)
+    base_price = stock.price if stock and stock.price else 10.0
+    chart_json = chart_gen.get_chart_json(code, stock.name if stock else None, days, base_price)
     
     return jsonify({
         "success": True,

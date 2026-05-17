@@ -14,6 +14,7 @@ class StockAnalyzer:
         opportunities = self._extract_opportunities(stock)
         risks = self._extract_risks(stock)
         recommendation = self._generate_recommendation(valuation, entry_range, stock)
+        source = self._generate_recommendation_source(stock, valuation, recommendation)
         
         return AnalysisResult(
             code=stock.code,
@@ -24,7 +25,8 @@ class StockAnalyzer:
             stop_loss=stop_loss,
             opportunity_points=opportunities,
             core_risks=risks,
-            recommendation=recommendation
+            recommendation=recommendation,
+            recommendation_source=source
         )
     
     def _calc_valuation_percentile(self, stock: Stock) -> float:
@@ -162,6 +164,24 @@ class StockAnalyzer:
                 rec = rec.replace("推荐", "建议关注")
         
         return rec
+    
+    def _generate_recommendation_source(self, stock: Stock, valuation: float, recommendation: str) -> str:
+        sources = []
+        
+        if stock.pe:
+            sources.append(f"PE={stock.pe}")
+        if stock.pb:
+            sources.append(f"PB={stock.pb}")
+        
+        valuation_level = "低估值" if valuation < 30 else ("高估值" if valuation > 70 else "适中")
+        sources.append(f"估值{valuation_level}")
+        
+        if stock.price and stock.price > 0:
+            sources.append(f"现价{stock.price}")
+        
+        combined = " | ".join(sources)
+        
+        return f"数据来源: 腾讯财经/同花顺 | 分析依据: {combined}"
     
     def analyze_batch(self, stocks: List[Stock]) -> List[AnalysisResult]:
         return [self.analyze(stock) for stock in stocks if stock.code]

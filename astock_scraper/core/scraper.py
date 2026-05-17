@@ -59,7 +59,7 @@ class TencentScraper(BaseScraper):
                     code=code[2:] if code.startswith(("sh", "sz")) else code,
                     name=parts[1] if len(parts) > 1 else "未知",
                     price=float(parts[3]) if parts[3] != "" and parts[3] != "0" else None,
-                    market_value=float(parts[44]) * 10000 if parts[44] else None,
+                    market_value=float(parts[44]) if parts[44] and parts[44] != "-" else None,
                     industry=self._get_industry_from_code(code),
                     concepts=self._extract_concepts(code),
                     products=self._extract_products(code),
@@ -123,16 +123,16 @@ class TencentScraper(BaseScraper):
     def _create_mock_stock(self, code: str) -> Stock:
         code_only = code[2:] if code.startswith(("sh", "sz")) else code
         mock_stocks = {
-            "000001": Stock(code="000001", name="平安银行", price=12.85, market_value=250000000000, 
+            "000001": Stock(code="000001", name="平安银行", price=12.85, market_value=2500.00, 
                           industry="银行", sub_industry="股份制银行", concepts=["数字货币", "互联金融", "MSCI中国"],
                           products=["公司银行", "零售银行", "金融科技"], pe=5.2, pb=0.65),
-            "000002": Stock(code="000002", name="万科A", price=10.23, market_value=120000000000,
+            "000002": Stock(code="000002", name="万科A", price=10.23, market_value=1200.00,
                           industry="房地产", sub_industry="房地产开发", concepts=["物业管理", "REITs", "保障房"],
                           products=["房地产开发", "物业服务", "租赁住房"], pe=8.5, pb=0.9),
-            "600519": Stock(code="600519", name="贵州茅台", price=1680.50, market_value=2100000000000,
+            "600519": Stock(code="600519", name="贵州茅台", price=1680.50, market_value=21000.00,
                           industry="白酒", sub_industry="高端白酒", concepts=["白酒", "消费", "超级品牌"],
                           products=["茅台酒", "系列酒", "酒类进出口"], pe=32.5, pb=11.2),
-            "000858": Stock(code="000858", name="五粮液", price=145.80, market_value=560000000000,
+            "000858": Stock(code="000858", name="五粮液", price=145.80, market_value=5600.00,
                           industry="白酒", sub_industry="浓香型白酒", concepts=["白酒", "消费", "MSCI中国"],
                           products=["五粮液", "浓香型白酒", "高端酒品"], pe=22.3, pb=5.8),
         }
@@ -144,7 +144,7 @@ class TencentScraper(BaseScraper):
             code=code_only,
             name=f"股票{code_only}",
             price=10.0 + (hash(code_only) % 100),
-            market_value=10000000000 + (hash(code_only) % 100) * 100000000,
+            market_value=100.0 + (hash(code_only) % 1000),
             industry="随机行业",
             sub_industry="随机子行业",
             concepts=["概念1", "概念2", "概念3"],
@@ -153,15 +153,15 @@ class TencentScraper(BaseScraper):
     
     def _search_mock_stocks(self, keyword: str) -> List[Stock]:
         mock_results = [
-            Stock(code="000001", name="平安银行", price=12.85, market_value=250000000000,
+            Stock(code="000001", name="平安银行", price=12.85, market_value=2500.00,
                   industry="银行", sub_industry="股份制银行"),
-            Stock(code="000002", name="万科A", price=10.23, market_value=120000000000,
+            Stock(code="000002", name="万科A", price=10.23, market_value=1200.00,
                   industry="房地产", sub_industry="房地产开发"),
-            Stock(code="600519", name="贵州茅台", price=1680.50, market_value=2100000000000,
+            Stock(code="600519", name="贵州茅台", price=1680.50, market_value=21000.00,
                   industry="白酒", sub_industry="高端白酒"),
-            Stock(code="000858", name="五粮液", price=145.80, market_value=560000000000,
+            Stock(code="000858", name="五粮液", price=145.80, market_value=5600.00,
                   industry="白酒", sub_industry="浓香型白酒"),
-            Stock(code="601318", name="中国平安", price=45.60, market_value=850000000000,
+            Stock(code="601318", name="中国平安", price=45.60, market_value=8500.00,
                   industry="保险", sub_industry="人身保险"),
         ]
         return [s for s in mock_results if keyword.lower() in s.name.lower() or keyword in s.industry]

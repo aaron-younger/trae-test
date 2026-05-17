@@ -42,6 +42,7 @@ class Database:
                     core_risks TEXT,
                     industry_rank INTEGER,
                     recommendation TEXT,
+                    recommendation_source TEXT,
                     update_time TEXT,
                     FOREIGN KEY(stock_code) REFERENCES stocks(code)
                 )
@@ -59,6 +60,11 @@ class Database:
                     FOREIGN KEY(stock_code) REFERENCES stocks(code)
                 )
             """)
+            
+            try:
+                conn.execute("ALTER TABLE analysis_results ADD COLUMN recommendation_source TEXT")
+            except sqlite3.OperationalError:
+                pass
     
     def save_stock(self, stock: Stock) -> bool:
         try:
@@ -129,14 +135,15 @@ class Database:
                     INSERT OR REPLACE INTO analysis_results
                     (stock_code, name, valuation_percentile, entry_min, entry_max,
                      stop_loss, opportunity_points, core_risks, industry_rank,
-                     recommendation, update_time)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     recommendation, recommendation_source, update_time)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     analysis.code, analysis.name, analysis.valuation_percentile,
                     analysis.entry_min, analysis.entry_max, analysis.stop_loss,
                     ",".join(analysis.opportunity_points) if analysis.opportunity_points else "",
                     ",".join(analysis.core_risks) if analysis.core_risks else "",
                     analysis.industry_rank, analysis.recommendation,
+                    getattr(analysis, 'recommendation_source', None),
                     datetime.now().isoformat()
                 ))
             return True

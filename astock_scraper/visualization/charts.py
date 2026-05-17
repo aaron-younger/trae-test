@@ -218,9 +218,11 @@ class ChartGenerator:
                 ma.append(round(ma_value, 2))
         return ma
     
-    def get_chart_json(self, code: str, name: str = None, days: int = 30) -> str:
+    def get_chart_json(self, code: str, name: str = None, days: int = 30, base_price: float = None) -> str:
+        if base_price is None:
+            base_price = 10 + (hash(code) % 100)
+        
         dates = [(datetime.now() - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(days, 0, -1)]
-        base_price = 10 + (hash(code) % 100)
         prices = self._generate_mock_prices(base_price, days)
         ma5 = self._calc_ma(prices["close"], 5)
         ma10 = self._calc_ma(prices["close"], 10)
@@ -228,6 +230,7 @@ class ChartGenerator:
         return json.dumps({
             "code": code,
             "name": name or code,
+            "currentPrice": base_price,
             "dates": dates,
             "prices": {
                 "open": prices["open"],

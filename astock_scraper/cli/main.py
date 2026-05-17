@@ -237,7 +237,7 @@ def industries():
     sorted_industries = sorted(industries.items(), key=lambda x: x[1]["total_value"], reverse=True)
     
     for name, data in sorted_industries:
-        value_str = f"{data['total_value']/1e8:.2f}" if data['total_value'] else "N/A"
+        value_str = f"{data['total_value']:.2f}" if data['total_value'] else "N/A"
         table.add_row(
             name,
             str(data["count"]),
@@ -264,7 +264,7 @@ def display_stocks(stocks: list, analyses: list = None):
     
     for stock in stocks:
         price_str = f"{stock.price:.2f}" if stock.price else "N/A"
-        value_str = f"{stock.market_value/1e8:.2f}" if stock.market_value else "N/A"
+        value_str = f"{stock.market_value:.2f}" if stock.market_value else "N/A"
         
         analysis = analysis_map.get(stock.code)
         rec = analysis.recommendation if analysis else "N/A"

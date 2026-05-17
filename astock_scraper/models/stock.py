@@ -75,6 +75,7 @@ class AnalysisResult:
     core_risks: List[str] = None
     industry_rank: Optional[int] = None
     recommendation: Optional[str] = None
+    recommendation_source: Optional[str] = None
     
     def __post_init__(self):
         if self.opportunity_points is None:
@@ -93,7 +94,8 @@ class AnalysisResult:
             "opportunity_points": ",".join(self.opportunity_points) if self.opportunity_points else "",
             "core_risks": ",".join(self.core_risks) if self.core_risks else "",
             "industry_rank": self.industry_rank,
-            "recommendation": self.recommendation
+            "recommendation": self.recommendation,
+            "recommendation_source": self.recommendation_source
         }
     
     @classmethod
@@ -115,5 +117,6 @@ class AnalysisResult:
             opportunity_points=opp_points,
             core_risks=core_risks,
             industry_rank=data.get("industry_rank"),
-            recommendation=data.get("recommendation")
+            recommendation=data.get("recommendation"),
+            recommendation_source=data.get("recommendation_source")
         )
