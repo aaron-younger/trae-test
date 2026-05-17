@@ -218,16 +218,16 @@
 
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
             margin-bottom: 24px;
         }
 
         .stat-card {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 20px;
+            border-radius: 8px;
+            padding: 12px 16px;
             position: relative;
             overflow: hidden;
         }
@@ -238,31 +238,32 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: 3px;
+            height: 2px;
             background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
         }
 
         .stat-label {
-            font-size: 12px;
+            font-size: 11px;
             color: var(--text-muted);
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
         }
 
         .stat-value {
-            font-size: 28px;
+            font-size: 20px;
             font-weight: 700;
             color: var(--text-primary);
             font-family: 'JetBrains Mono', monospace;
         }
 
         .stat-change {
-            font-size: 12px;
-            margin-top: 8px;
+            font-size: 11px;
+            margin-top: 4px;
             display: flex;
             align-items: center;
             gap: 4px;
+            color: var(--text-muted);
         }
 
         .stat-change.positive {
@@ -275,7 +276,7 @@
 
         .main-content {
             display: grid;
-            grid-template-columns: 1fr 400px;
+            grid-template-columns: 1fr 380px;
             gap: 24px;
         }
 
@@ -293,7 +294,7 @@
         }
 
         .card-header {
-            padding: 20px;
+            padding: 16px 20px;
             border-bottom: 1px solid var(--border-color);
             display: flex;
             justify-content: space-between;
@@ -317,7 +318,7 @@
         }
 
         .card-body {
-            padding: 20px;
+            padding: 16px 20px;
         }
 
         .table-wrapper {
@@ -330,7 +331,7 @@
         }
 
         th, td {
-            padding: 12px 16px;
+            padding: 10px 12px;
             text-align: left;
             border-bottom: 1px solid var(--border-color);
         }
@@ -338,7 +339,7 @@
         th {
             background: var(--bg-tertiary);
             font-weight: 600;
-            font-size: 12px;
+            font-size: 11px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             color: var(--text-secondary);
@@ -362,11 +363,15 @@
         }
 
         td {
-            font-size: 14px;
+            font-size: 13px;
         }
 
         tr:hover {
             background: rgba(0, 212, 170, 0.05);
+        }
+
+        tr.selected {
+            background: rgba(0, 212, 170, 0.1);
         }
 
         .stock-code {
@@ -427,12 +432,13 @@
 
         .action-btns {
             display: flex;
-            gap: 8px;
+            gap: 4px;
+            align-items: center;
         }
 
         .action-btn {
-            width: 32px;
-            height: 32px;
+            width: 28px;
+            height: 28px;
             border: 1px solid var(--border-color);
             border-radius: 6px;
             cursor: pointer;
@@ -467,143 +473,49 @@
         .action-btn.delete:hover {
             background: rgba(239, 68, 68, 0.2);
         }
-        
-        .action-btns {
-            display: flex;
-            gap: 4px;
-            align-items: center;
-        }
 
         .sidebar {
             display: flex;
             flex-direction: column;
-            gap: 24px;
+            gap: 16px;
         }
 
         .chart-container {
-            height: 350px;
+            height: 280px;
             background: var(--bg-tertiary);
             border-radius: 8px;
             overflow: hidden;
         }
 
-        .chart-placeholder {
+        #chartPlaceholder {
             height: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             color: var(--text-muted);
-            gap: 16px;
+            gap: 12px;
         }
 
-        .chart-placeholder svg {
-
-        .chart-legend {
-            padding: 12px 16px;
-            background: var(--bg-tertiary);
-            border-radius: 8px;
-            margin-top: 12px;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 4px 0;
-            font-size: 12px;
-            color: var(--text-secondary);
-        }
-
-        .legend-color {
-            width: 16px;
-            height: 3px;
-            border-radius: 2px;
-        }
-            width: 64px;
-
-        .chart-legend {
-            padding: 12px 16px;
-            background: var(--bg-tertiary);
-            border-radius: 8px;
-            margin-top: 12px;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 4px 0;
-            font-size: 12px;
-            color: var(--text-secondary);
-        }
-
-        .legend-color {
-            width: 16px;
-            height: 3px;
-            border-radius: 2px;
-        }
-            height: 64px;
-
-        .chart-legend {
-            padding: 12px 16px;
-            background: var(--bg-tertiary);
-            border-radius: 8px;
-            margin-top: 12px;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 4px 0;
-            font-size: 12px;
-            color: var(--text-secondary);
-        }
-
-        .legend-color {
-            width: 16px;
-            height: 3px;
-            border-radius: 2px;
-        }
+        #chartPlaceholder svg {
+            width: 48px;
+            height: 48px;
             opacity: 0.3;
+        }
 
         .chart-legend {
-            padding: 12px 16px;
+            padding: 10px 12px;
             background: var(--bg-tertiary);
-            border-radius: 8px;
-            margin-top: 12px;
+            border-radius: 6px;
+            margin-top: 10px;
         }
 
         .legend-item {
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 4px 0;
-            font-size: 12px;
-            color: var(--text-secondary);
-        }
-
-        .legend-color {
-            width: 16px;
-            height: 3px;
-            border-radius: 2px;
-        }
-        }
-
-        .chart-legend {
-            padding: 12px 16px;
-            background: var(--bg-tertiary);
-            border-radius: 8px;
-            margin-top: 12px;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 4px 0;
-            font-size: 12px;
+            padding: 3px 0;
+            font-size: 11px;
             color: var(--text-secondary);
         }
 
@@ -620,7 +532,7 @@
         }
 
         .industry-item {
-            padding: 12px 16px;
+            padding: 10px 14px;
             background: var(--bg-tertiary);
             border-radius: 8px;
             display: flex;
@@ -637,13 +549,14 @@
 
         .industry-name {
             font-weight: 500;
+            font-size: 13px;
         }
 
         .industry-count {
-            font-size: 12px;
+            font-size: 11px;
             color: var(--text-muted);
             background: var(--bg-card);
-            padding: 4px 8px;
+            padding: 3px 8px;
             border-radius: 4px;
         }
 
@@ -686,7 +599,7 @@
         }
 
         .modal-header {
-            padding: 24px;
+            padding: 20px 24px;
             border-bottom: 1px solid var(--border-color);
             display: flex;
             justify-content: space-between;
@@ -694,13 +607,13 @@
         }
 
         .modal-title {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 600;
         }
 
         .modal-close {
-            width: 36px;
-            height: 36px;
+            width: 32px;
+            height: 32px;
             border: none;
             background: var(--bg-tertiary);
             border-radius: 8px;
@@ -718,17 +631,17 @@
         }
 
         .modal-body {
-            padding: 24px;
+            padding: 20px 24px;
         }
 
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
         .form-label {
             display: block;
             margin-bottom: 8px;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 500;
             color: var(--text-secondary);
         }
@@ -752,7 +665,7 @@
 
         textarea.form-input {
             resize: vertical;
-            min-height: 120px;
+            min-height: 100px;
             font-family: 'JetBrains Mono', monospace;
         }
 
@@ -760,7 +673,7 @@
             display: flex;
             gap: 12px;
             justify-content: flex-end;
-            margin-top: 24px;
+            margin-top: 20px;
         }
 
         .loading-overlay {
@@ -786,8 +699,8 @@
         }
 
         .loading-spinner {
-            width: 60px;
-            height: 60px;
+            width: 50px;
+            height: 50px;
             border: 4px solid var(--border-color);
             border-top-color: var(--accent-primary);
             border-radius: 50%;
@@ -795,8 +708,8 @@
         }
 
         .loading-text {
-            margin-top: 20px;
-            font-size: 16px;
+            margin-top: 16px;
+            font-size: 14px;
             color: var(--text-secondary);
         }
 
@@ -808,13 +721,13 @@
             position: fixed;
             bottom: 24px;
             right: 24px;
-            padding: 16px 24px;
+            padding: 14px 20px;
             background: var(--bg-card);
             border: 1px solid var(--border-color);
             border-radius: 12px;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             box-shadow: var(--shadow);
             transform: translateY(100px);
             opacity: 0;
@@ -836,8 +749,8 @@
         }
 
         .toast-icon {
-            width: 24px;
-            height: 24px;
+            width: 20px;
+            height: 20px;
         }
 
         .toast.success .toast-icon {
@@ -853,22 +766,23 @@
             justify-content: center;
             align-items: center;
             gap: 8px;
-            padding: 20px;
+            padding: 16px;
             border-top: 1px solid var(--border-color);
         }
 
         .page-btn {
-            width: 36px;
-            height: 36px;
+            width: 32px;
+            height: 32px;
             border: 1px solid var(--border-color);
             background: var(--bg-tertiary);
-            border-radius: 8px;
+            border-radius: 6px;
             color: var(--text-secondary);
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: all 0.2s ease;
+            font-size: 13px;
         }
 
         .page-btn:hover:not(:disabled) {
@@ -888,40 +802,41 @@
         }
 
         .empty-state {
-            padding: 60px 20px;
+            padding: 40px 20px;
             text-align: center;
             color: var(--text-muted);
         }
 
         .empty-state svg {
-            width: 80px;
-            height: 80px;
-            margin-bottom: 20px;
+            width: 60px;
+            height: 60px;
+            margin-bottom: 16px;
             opacity: 0.3;
         }
 
         .empty-state h3 {
-            font-size: 18px;
+            font-size: 16px;
             margin-bottom: 8px;
             color: var(--text-secondary);
         }
 
         .empty-state p {
-            font-size: 14px;
+            font-size: 13px;
         }
 
         .analysis-panel {
             background: var(--bg-tertiary);
             border-radius: 8px;
-            padding: 16px;
-            margin-top: 16px;
+            padding: 12px;
+            margin-top: 12px;
         }
 
         .analysis-item {
             display: flex;
             justify-content: space-between;
-            padding: 8px 0;
+            padding: 6px 0;
             border-bottom: 1px solid var(--border-color);
+            font-size: 12px;
         }
 
         .analysis-item:last-child {
@@ -930,7 +845,6 @@
 
         .analysis-label {
             color: var(--text-secondary);
-            font-size: 13px;
         }
 
         .analysis-value {
@@ -940,29 +854,18 @@
 
         .tag {
             display: inline-block;
-            padding: 4px 8px;
+            padding: 3px 6px;
             background: rgba(99, 102, 241, 0.2);
             color: var(--accent-secondary);
             border-radius: 4px;
+            font-size: 10px;
+            margin-right: 3px;
+            margin-bottom: 3px;
+        }
+
+        .sub-industry-tag {
+            color: var(--text-muted);
             font-size: 11px;
-            margin-right: 4px;
-            margin-bottom: 4px;
-        }
-
-        .loading-cell {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .loading-cell::after {
-            content: '';
-            width: 16px;
-            height: 16px;
-            border: 2px solid var(--border-color);
-            border-top-color: var(--accent-primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
         }
 
         @media (max-width: 768px) {
@@ -975,12 +878,12 @@
                 gap: 16px;
             }
 
-            .search-bar {
-                flex-direction: column;
-            }
-
             .stats-grid {
                 grid-template-columns: repeat(2, 1fr);
+            }
+
+            .search-bar {
+                flex-direction: column;
             }
 
             .main-content {
@@ -992,7 +895,7 @@
             }
 
             th, td {
-                padding: 8px 10px;
+                padding: 8px 8px;
             }
         }
     </style>
@@ -1014,7 +917,7 @@
                         <polyline points="7 10 12 15 17 10"></polyline>
                         <line x1="12" y1="15" x2="12" y2="3"></line>
                     </svg>
-                    导出数据
+                    导出
                 </button>
                 <button class="btn btn-primary" onclick="openAddModal()">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1022,14 +925,14 @@
                         <polyline points="17 8 12 3 7 8"></polyline>
                         <line x1="12" y1="3" x2="12" y2="15"></line>
                     </svg>
-                    导入数据
+                    导入
                 </button>
                 <button class="btn btn-secondary" onclick="scrapeData()">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polyline points="23 4 23 10 17 10"></polyline>
                         <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
                     </svg>
-                    更新数据
+                    更新
                 </button>
             </div>
         </header>
@@ -1038,43 +941,22 @@
             <div class="stat-card">
                 <div class="stat-label">股票总数</div>
                 <div class="stat-value" id="totalStocks">0</div>
-                <div class="stat-change positive">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
-                    </svg>
-                    已采集数据
-                </div>
+                <div class="stat-change positive">已采集</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">行业覆盖</div>
                 <div class="stat-value" id="totalIndustries">0</div>
-                <div class="stat-change positive">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
-                    </svg>
-                    个行业
-                </div>
+                <div class="stat-change positive">个行业</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">推荐买入</div>
                 <div class="stat-value" id="buyCount">0</div>
-                <div class="stat-change positive">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
-                    </svg>
-                    只股票
-                </div>
+                <div class="stat-change positive">只股票</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">数据更新</div>
-                <div class="stat-value" id="lastUpdate">--</div>
-                <div class="stat-change">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <polyline points="12 6 12 12 16 14"></polyline>
-                    </svg>
-                    最近更新
-                </div>
+                <div class="stat-value" id="lastUpdate" style="font-size: 14px;">--</div>
+                <div class="stat-change">最近更新</div>
             </div>
         </div>
 
@@ -1090,10 +972,10 @@
                 <option value="">全行业</option>
             </select>
             <select class="filter-select" id="sortSelect" onchange="sortStocks()">
-                <option value="industry">按行业排序</option>
-                <option value="code">按代码排序</option>
-                <option value="name">按名称排序</option>
-                <option value="price">按价格排序</option>
+                <option value="industry">按行业</option>
+                <option value="code">按代码</option>
+                <option value="name">按名称</option>
+                <option value="price">按价格</option>
             </select>
         </div>
 
@@ -1101,7 +983,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">股票列表</div>
-                    <span id="stockCount" style="color: var(--text-muted); font-size: 14px;">0 只股票</span>
+                    <span id="stockCount" style="color: var(--text-muted); font-size: 13px;">0 只股票</span>
                 </div>
                 <div class="table-wrapper">
                     <table>
@@ -1110,11 +992,12 @@
                                 <th onclick="sortBy('code')">代码 <span class="sort-icon">↕</span></th>
                                 <th onclick="sortBy('name')">名称 <span class="sort-icon">↕</span></th>
                                 <th onclick="sortBy('price')">现价 <span class="sort-icon">↕</span></th>
-                                <th onclick="sortBy('marketValue')">市值(亿) <span class="sort-icon">↕</span></th>
+                                <th onclick="sortBy('marketValue')">市值 <span class="sort-icon">↕</span></th>
                                 <th onclick="sortBy('industry')">行业 <span class="sort-icon">↕</span></th>
+                                <th>细分行业</th>
                                 <th>概念</th>
                                 <th>推荐</th>
-                                <th>图表</th>
+                                <th>操作</th>
                             </tr>
                         </thead>
                         <tbody id="stockTableBody">
@@ -1127,31 +1010,31 @@
             <div class="sidebar">
                 <div class="card">
                     <div class="card-header">
-                        <div class="card-title">价格趋势图</div>
+                        <div class="card-title" id="chartTitle">价格趋势图</div>
                     </div>
                     <div class="card-body">
                         <div id="chartContainer" class="chart-container">
-                            <div class="chart-placeholder">
+                            <div id="chartPlaceholder">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                                     <path d="M3 3v18h18"></path>
                                     <path d="M18 9l-5-6-4 4-3-3"></path>
                                 </svg>
                                 <span>点击股票查看趋势图</span>
                             </div>
+                        </div>
                         <div id="chartLegend" class="chart-legend" style="display: none;">
                             <div class="legend-item">
                                 <span class="legend-color" style="background: #00d4aa;"></span>
-                                <span>收盘价 - 每日收盘价格连线</span>
+                                <span>收盘价</span>
                             </div>
                             <div class="legend-item">
                                 <span class="legend-color" style="background: #f59e0b;"></span>
-                                <span>MA5 - 5日均线（短期趋势）</span>
+                                <span>MA5(5日均线)</span>
                             </div>
                             <div class="legend-item">
                                 <span class="legend-color" style="background: #6366f1;"></span>
-                                <span>MA10 - 10日均线（中期趋势）</span>
+                                <span>MA10(10日均线)</span>
                             </div>
-                        </div>
                         </div>
                         <div id="selectedStockInfo" class="analysis-panel" style="display: none;"></div>
                     </div>
@@ -1342,6 +1225,7 @@
                         s.code.toLowerCase().includes(keyword) ||
                         (s.name && s.name.toLowerCase().includes(keyword)) ||
                         (s.industry && s.industry.toLowerCase().includes(keyword)) ||
+                        (s.sub_industry && s.sub_industry.toLowerCase().includes(keyword)) ||
                         (s.concepts && s.concepts.toLowerCase().includes(keyword))
                     );
                 } else {
@@ -1426,7 +1310,7 @@
             if (data.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="8">
+                        <td colspan="9">
                             <div class="empty-state">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
@@ -1447,27 +1331,30 @@
                 const rec = stock.analysis?.recommendation || 'N/A';
                 const recClass = getRecommendationClass(rec);
                 const isSelected = selectedStockCode === stock.code;
+                const oppPoints = stock.analysis?.opportunity_points || [];
+                const oppArray = Array.isArray(oppPoints) ? oppPoints : String(oppPoints).split(',').filter(p => p.trim());
 
                 return `
-                    <tr onclick="selectStock('${stock.code}')" style="cursor: pointer; ${isSelected ? 'background: rgba(0, 212, 170, 0.1);' : ''}">
+                    <tr onclick="selectStock('${stock.code}')" style="cursor: pointer;" class="${isSelected ? 'selected' : ''}">
                         <td><span class="stock-code">${stock.code}</span></td>
                         <td><span class="stock-name">${stock.name || '未知'}</span></td>
                         <td><span class="price">${stock.price ? stock.price.toFixed(2) : 'N/A'}</span></td>
                         <td style="text-align: right; font-family: 'JetBrains Mono', monospace;">${stock.market_value ? stock.market_value.toFixed(2) : 'N/A'}</td>
                         <td>${stock.industry || 'N/A'}</td>
+                        <td><span class="sub-industry-tag">${stock.sub_industry || '-'}</span></td>
                         <td>${concepts.map(c => `<span class="tag">${c}</span>`).join('')}</td>
                         <td><span class="recommendation ${recClass}">${rec}</span></td>
-                        <td style="max-width: 120px;">
+                        <td>
                             <div class="action-btns" onclick="event.stopPropagation();">
-                                <button class="action-btn chart" onclick="viewChart('${stock.code}')" title="查看图表">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <button class="action-btn chart" onclick="viewChart('${stock.code}')" title="图表">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <line x1="18" y1="20" x2="18" y2="10"></line>
                                         <line x1="12" y1="20" x2="12" y2="4"></line>
                                         <line x1="6" y1="20" x2="6" y2="14"></line>
                                     </svg>
                                 </button>
                                 <button class="action-btn delete" onclick="deleteStock('${stock.code}')" title="删除">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <polyline points="3 6 5 6 21 6"></polyline>
                                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                                     </svg>
@@ -1488,7 +1375,7 @@
 
             let html = `
                 <button class="page-btn" onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polyline points="15 18 9 12 15 6"></polyline>
                     </svg>
                 </button>
@@ -1504,7 +1391,7 @@
 
             html += `
                 <button class="page-btn" onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polyline points="9 18 15 12 9 6"></polyline>
                     </svg>
                 </button>
@@ -1531,6 +1418,7 @@
         async function selectStock(code) {
             selectedStockCode = code;
             filterAndRender();
+            await viewChart(code);
         }
 
         async function viewChart(code) {
@@ -1549,6 +1437,14 @@
 
         function renderChart(data) {
             const container = document.getElementById('chartContainer');
+            const placeholder = document.getElementById('chartPlaceholder');
+            const chartTitle = document.getElementById('chartTitle');
+            
+            if (placeholder) placeholder.style.display = 'none';
+            
+            if (chartTitle) {
+                chartTitle.innerHTML = `<span style="color: var(--accent-primary);">${data.name}</span> <span style="color: var(--text-muted); font-size: 12px;">(${data.code}) 当前价: ¥${data.currentPrice?.toFixed(2) || 'N/A'}</span>`;
+            }
             
             const trace1 = {
                 x: data.dates,
@@ -1584,30 +1480,33 @@
                 paper_bgcolor: '#1a1f2e',
                 plot_bgcolor: '#1a1f2e',
                 font: { color: '#e2e8f0', family: 'Noto Sans SC' },
-                height: 280,
-                margin: { t: 20, r: 20, b: 40, l: 50 },
+                height: 240,
+                margin: { t: 10, r: 15, b: 35, l: 45 },
                 xaxis: {
                     gridcolor: '#2d3748',
                     showgrid: true,
-                    zeroline: false
+                    zeroline: false,
+                    tickfont: { size: 10 }
                 },
                 yaxis: {
                     gridcolor: '#2d3748',
                     showgrid: true,
-                    zeroline: false
+                    zeroline: false,
+                    tickfont: { size: 10 }
                 },
                 legend: {
                     orientation: 'h',
-                    y: 1.1,
+                    y: 1.12,
                     x: 0.5,
-                    xanchor: 'center'
+                    xanchor: 'center',
+                    font: { size: 10 }
                 }
             };
 
             Plotly.newPlot(container, [trace1, trace2, trace3], layout, {responsive: true});
             
-            // 显示图例说明
-            document.getElementById('chartLegend').style.display = 'block';
+            const chartLegend = document.getElementById('chartLegend');
+            if (chartLegend) chartLegend.style.display = 'block';
         }
 
         async function renderStockInfo(code) {
@@ -1616,38 +1515,39 @@
             
             if (!stock) return;
 
+            const oppPoints = stock.analysis?.opportunity_points || [];
+            const coreRisks = stock.analysis?.core_risks || [];
+            const oppArray = Array.isArray(oppPoints) ? oppPoints : String(oppPoints).split(',').filter(p => p.trim());
+            const riskArray = Array.isArray(coreRisks) ? coreRisks : String(coreRisks).split(',').filter(r => r.trim());
+
             container.style.display = 'block';
             container.innerHTML = `
-                <h4 style="margin-bottom: 12px; color: var(--accent-primary);">${stock.name} (${stock.code})</h4>
-                ${stock.analysis ? `
-                    <div class="analysis-item">
-                        <span class="analysis-label">估值百分位</span>
-                        <span class="analysis-value" style="color: ${stock.analysis.valuation_percentile < 30 ? 'var(--accent-green)' : 'var(--accent-yellow)'}">
-                            ${stock.analysis.valuation_percentile?.toFixed(1)}%
-                        </span>
-                    </div>
-                    <div class="analysis-item">
-                        <span class="analysis-label">入场区间</span>
-                        <span class="analysis-value">${stock.analysis.entry_min?.toFixed(2)} - ${stock.analysis.entry_max?.toFixed(2)}</span>
-                    </div>
-                    <div class="analysis-item">
-                        <span class="analysis-label">止损位</span>
-                        <span class="analysis-value" style="color: var(--accent-red);">${stock.analysis.stop_loss?.toFixed(2)}</span>
-                    </div>
-                    <div class="analysis-item" style="flex-direction: column; gap: 8px;">
-                        <span class="analysis-label">机会要点</span>
-                        <div>${(stock.analysis.opportunity_points || '').split(',').filter(p => p).map(p => `<span class="tag" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-green);">${p}</span>`).join('')}</div>
-                    </div>
-                    <div class="analysis-item" style="flex-direction: column; gap: 8px;">
-                        <span class="analysis-label">核心风险</span>
-                        <div>${(stock.analysis.core_risks || '').split(',').filter(r => r).map(r => `<span class="tag" style="background: rgba(239, 68, 68, 0.2); color: var(--accent-red);">${r}</span>`).join('')}</div>
-                    </div>
-                    ${stock.analysis.recommendation_source ? `
-                    <div class="analysis-item" style="flex-direction: column; gap: 4px; margin-top: 8px;">
-                        <span class="analysis-label" style="font-size: 10px; color: var(--text-muted);">${stock.analysis.recommendation_source}</span>
-                    </div>
-                    ` : ''}
-                ` : '<p style="color: var(--text-muted); font-size: 13px;">点击"更新数据"获取分析结果</p>'}
+                <div class="analysis-item">
+                    <span class="analysis-label">估值百分位</span>
+                    <span class="analysis-value" style="color: ${stock.analysis?.valuation_percentile < 30 ? 'var(--accent-green)' : 'var(--accent-yellow)'}">
+                        ${stock.analysis?.valuation_percentile?.toFixed(1) || 'N/A'}%
+                    </span>
+                </div>
+                <div class="analysis-item">
+                    <span class="analysis-label">入场区间</span>
+                    <span class="analysis-value">${stock.analysis?.entry_min?.toFixed(2) || 'N/A'} - ${stock.analysis?.entry_max?.toFixed(2) || 'N/A'}</span>
+                </div>
+                <div class="analysis-item">
+                    <span class="analysis-label">止损位</span>
+                    <span class="analysis-value" style="color: var(--accent-red);">${stock.analysis?.stop_loss?.toFixed(2) || 'N/A'}</span>
+                </div>
+                ${oppArray.length > 0 ? `
+                <div class="analysis-item" style="flex-direction: column; gap: 6px;">
+                    <span class="analysis-label">机会要点</span>
+                    <div>${oppArray.map(p => `<span class="tag" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-green);">${p}</span>`).join('')}</div>
+                </div>
+                ` : ''}
+                ${riskArray.length > 0 ? `
+                <div class="analysis-item" style="flex-direction: column; gap: 6px;">
+                    <span class="analysis-label">核心风险</span>
+                    <div>${riskArray.map(r => `<span class="tag" style="background: rgba(239, 68, 68, 0.2); color: var(--accent-red);">${r}</span>`).join('')}</div>
+                </div>
+                ` : ''}
             `;
         }
 
@@ -1684,7 +1584,7 @@
             }
 
             try {
-                showLoading(`正在导入 ${codes.length} 只股票，请稍候...`);
+                showLoading(`正在导入 ${codes.length} 只股票...`);
                 
                 const response = await fetch(`${API_BASE}/stocks/scrape`, {
                     method: 'POST',
@@ -1700,7 +1600,6 @@
                     let msg = `成功导入 ${result.total} 只股票`;
                     if (result.errors && result.errors.length > 0) {
                         msg += ` (${result.errors.length} 只失败)`;
-                        console.log('导入失败的股票:', result.errors);
                     }
                     showToast(msg, result.total > 0 ? 'success' : 'error');
                 } else {
@@ -1726,6 +1625,13 @@
                 
                 if (result.success) {
                     await loadStocks();
+                    if (selectedStockCode === code) {
+                        selectedStockCode = null;
+                        document.getElementById('chartPlaceholder').style.display = 'flex';
+                        document.getElementById('chartLegend').style.display = 'none';
+                        document.getElementById('selectedStockInfo').style.display = 'none';
+                        document.getElementById('chartTitle').textContent = '价格趋势图';
+                    }
                     showToast('删除成功', 'success');
                 } else {
                     showToast('删除失败', 'error');
