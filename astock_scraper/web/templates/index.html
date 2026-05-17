@@ -944,6 +944,15 @@
             <select class="filter-select" id="industryFilter" onchange="filterByIndustry()">
                 <option value="">全行业</option>
             </select>
+            <select class="filter-select" id="recommendationFilter" onchange="filterByRecommendation()">
+                <option value="">全推荐</option>
+                <option value="强烈推荐">强烈推荐</option>
+                <option value="推荐">推荐</option>
+                <option value="建议关注">建议关注</option>
+                <option value="中性">中性</option>
+                <option value="谨慎">谨慎</option>
+                <option value="回避">回避</option>
+            </select>
             <select class="filter-select" id="sortSelect" onchange="sortStocks()">
                 <option value="industry">按行业</option>
                 <option value="code">按代码</option>
@@ -973,7 +982,7 @@
                                 <th onclick="sortBy('marketValue')">市值 <span class="sort-icon">↕</span></th>
                                 <th onclick="sortBy('industry')">行业 <span class="sort-icon">↕</span></th>
                                 <th>概念</th>
-                                <th>推荐</th>
+                                <th onclick="sortBy('recommendation')">推荐 <span class="sort-icon">↕</span></th>
                                 <th>操作</th>
                             </tr>
                         </thead>
@@ -1170,12 +1179,35 @@
                 industry = document.getElementById('industryFilter').value;
             }
 
-            if (industry) {
-                filteredStocks = stocks.filter(s => s.industry === industry);
+            applyFilters(industry);
+        }
+
+        function filterByRecommendation(recommendation = null) {
+            if (recommendation !== null) {
+                document.getElementById('recommendationFilter').value = recommendation;
             } else {
-                filteredStocks = [...stocks];
+                recommendation = document.getElementById('recommendationFilter').value;
             }
 
+            const industry = document.getElementById('industryFilter').value;
+            applyFilters(industry, recommendation);
+        }
+
+        function applyFilters(industry = null, recommendation = null) {
+            let filtered = [...stocks];
+
+            if (industry) {
+                filtered = filtered.filter(s => s.industry === industry);
+            }
+
+            if (recommendation) {
+                filtered = filtered.filter(s => {
+                    const rec = s.analysis?.recommendation || '';
+                    return rec.includes(recommendation);
+                });
+            }
+
+            filteredStocks = filtered;
             currentPage = 1;
             filterAndRender();
         }
@@ -1212,6 +1244,8 @@
                 sortAsc = true;
             }
 
+            const recOrder = {'强烈推荐': 0, '推荐': 1, '建议关注': 2, '建议观望': 2, '中性': 3, '谨慎': 4, '回避': 5};
+
             filteredStocks.sort((a, b) => {
                 let valA = a[field];
                 let valB = b[field];
@@ -1219,9 +1253,12 @@
                 if (field === 'marketValue') {
                     valA = a.market_value || 0;
                     valB = b.market_value || 0;
-                }
-
-                if (typeof valA === 'string') {
+                } else if (field === 'recommendation') {
+                    const recA = a.analysis?.recommendation || '中性';
+                    const recB = b.analysis?.recommendation || '中性';
+                    valA = recOrder[recA] !== undefined ? recOrder[recA] : 3;
+                    valB = recOrder[recB] !== undefined ? recOrder[recB] : 3;
+                } else if (typeof valA === 'string') {
                     valA = valA.toLowerCase();
                     valB = valB?.toLowerCase() || '';
                 }
@@ -1231,6 +1268,7 @@
                 return 0;
             });
 
+            currentPage = 1;
             filterAndRender();
         }
 
