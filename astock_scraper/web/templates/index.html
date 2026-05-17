@@ -1530,7 +1530,7 @@
             }
 
             try {
-                showLoading(`正在导入 ${codes.length} 只股票...`);
+                showLoading(`正在导入 ${codes.length} 只股票，请稍候...`);
                 
                 const response = await fetch(`${API_BASE}/stocks/scrape`, {
                     method: 'POST',
@@ -1543,7 +1543,12 @@
                 if (result.success) {
                     await loadStocks();
                     closeModal();
-                    showToast(`成功导入 ${result.total} 只股票`, 'success');
+                    let msg = `成功导入 ${result.total} 只股票`;
+                    if (result.errors && result.errors.length > 0) {
+                        msg += ` (${result.errors.length} 只失败)`;
+                        console.log('导入失败的股票:', result.errors);
+                    }
+                    showToast(msg, result.total > 0 ? 'success' : 'error');
                 } else {
                     showToast(result.error || '导入失败', 'error');
                 }
@@ -1551,7 +1556,7 @@
             } catch (error) {
                 console.error('导入失败:', error);
                 hideLoading();
-                showToast('导入失败', 'error');
+                showToast('网络错误，请稍后重试', 'error');
             }
         }
 

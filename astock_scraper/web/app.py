@@ -142,20 +142,32 @@ def scrape_stocks():
         codes = [s.code for s in search_results]
     
     raw_stocks = []
-    for code in codes:
-        scraper = scraper_factory.get_scraper("tencent")
-        stock = scraper.fetch_stock_info(code)
-        if stock:
-            raw_stocks.append(stock)
+    errors = []
+    for i, code in enumerate(codes):
+        try:
+            print(f"正在采集第 {i+1}/{len(codes)} 只股票: {code}")
+            scraper = scraper_factory.get_scraper("tencent")
+            stock = scraper.fetch_stock_info(code)
+            if stock:
+                raw_stocks.append(stock)
+        except Exception as e:
+            print(f"采集 {code} 失败: {e}")
+            errors.append(f"{code}: {str(e)[:50]}")
+            # 遇到小错误继续处理下一只
+            continue
     
     cleaned_stocks = cleaner.process(raw_stocks)
     saved_count = db.save_stocks(cleaned_stocks)
     
     analyses = []
     for stock in cleaned_stocks:
-        analysis = analyzer.analyze(stock)
-        db.save_analysis(analysis)
-        analyses.append(analysis)
+        try:
+            analysis = analyzer.analyze(stock)
+            db.save_analysis(analysis)
+            analyses.append(analysis)
+        except Exception as e:
+            print(f"分析 {stock.code} 失败: {e}")
+            # 跳过分析失败的
     
     result = []
     for stock in cleaned_stocks:
@@ -165,11 +177,16 @@ def scrape_stocks():
             stock_dict["analysis"] = analysis.to_dict()
         result.append(stock_dict)
     
+    message = f"成功采集并分析 {saved_count} 只股票"
+    if errors:
+        message += f" ({len(errors)} 只失败)"
+    
     return jsonify({
         "success": True,
-        "message": f"成功采集并分析 {saved_count} 只股票",
+        "message": message,
         "data": result,
-        "total": saved_count
+        "total": saved_count,
+        "errors": errors[:10] if len(errors) > 10 else errors
     })
 
 @app.route("/api/stocks/<code>/chart", methods=["GET"])

@@ -189,22 +189,42 @@ class ChartGenerator:
     
     def _generate_mock_prices(self, base_price: float, days: int) -> Dict[str, List[float]]:
         prices = {"open": [], "high": [], "low": [], "close": []}
+        
+        # 生成倒推，从当前价格开始，让最后一天（最新）是当前价格，然后向前生成
         current = base_price
         
+        # 先反向生成（从当前往过去推）
+        backward_prices = []
         for _ in range(days):
-            change = random.uniform(-0.03, 0.04)
+            change = random.uniform(-0.02, 0.03)
             open_price = current
             close_price = current * (1 + change)
             
             high_price = max(open_price, close_price) * random.uniform(1.0, 1.02)
             low_price = min(open_price, close_price) * random.uniform(0.98, 1.0)
             
-            prices["open"].append(round(open_price, 2))
-            prices["high"].append(round(high_price, 2))
-            prices["low"].append(round(low_price, 2))
-            prices["close"].append(round(close_price, 2))
+            backward_prices.append({
+                "open": round(open_price, 2),
+                "high": round(high_price, 2),
+                "close": round(close_price, 2),
+                "low": round(low_price, 2),
+            })
             
             current = close_price
+        
+        # 反转得到从旧到新
+        backward_prices.reverse()
+        
+        # 填充到数组，确保最后一个价格是base_price
+        for i, p in enumerate(backward_prices):
+            prices["open"].append(p["open"])
+            prices["high"].append(p["high"])
+            prices["low"].append(p["low"])
+            if i == len(backward_prices) - 1:
+                # 最后一天（最新一天）价格设为base_price
+                prices["close"].append(round(base_price, 2))
+            else:
+                prices["close"].append(p["close"])
         
         return prices
     

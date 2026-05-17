@@ -22,14 +22,19 @@ class BaseScraper(abc.ABC):
         
         for attempt in range(max_retries):
             try:
-                response = requests.get(url, params=params, headers=headers, timeout=timeout)
+                # 添加连接超时和读取超时
+                response = requests.get(url, params=params, headers=headers, timeout=(timeout * 0.3, timeout))
                 response.raise_for_status()
                 return response
-            except requests.RequestException as e:
+            except requests.exceptions.Timeout:
+                print(f"[{self.name}] 请求超时 (尝试 {attempt + 1}/{max_retries})")
                 if attempt == max_retries - 1:
-                    print(f"[{self.name}] Request failed after {max_retries} attempts: {e}")
                     return None
-                time.sleep(1 * (attempt + 1))
+            except requests.RequestException as e:
+                print(f"[{self.name}] 请求失败 (尝试 {attempt + 1}/{max_retries}): {e}")
+                if attempt == max_retries - 1:
+                    return None
+                time.sleep(0.5 * (attempt + 1))
         return None
 
 class TencentScraper(BaseScraper):
