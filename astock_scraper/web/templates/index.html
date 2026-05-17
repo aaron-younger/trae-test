@@ -1409,7 +1409,8 @@
                 low: data.prices.low,
                 close: data.prices.close,
                 type: 'candlestick',
-                name: '日K线',
+                name: '',
+                showlegend: false,
                 increasing: { line: { color: '#ef4444' }, fillcolor: 'rgba(239, 68, 68, 0.5)' },
                 decreasing: { line: { color: '#22c55e' }, fillcolor: 'rgba(34, 197, 94, 0.5)' }
             };
@@ -1426,7 +1427,8 @@
                     y: ma5Valid.map(v => v.y),
                     type: 'scatter',
                     mode: 'lines',
-                    name: 'MA5',
+                    name: '',
+                    showlegend: false,
                     line: { color: '#f59e0b', width: 1.5 }
                 });
             }
@@ -1437,7 +1439,8 @@
                     y: ma10Valid.map(v => v.y),
                     type: 'scatter',
                     mode: 'lines',
-                    name: 'MA10',
+                    name: '',
+                    showlegend: false,
                     line: { color: '#6366f1', width: 1.5 }
                 });
             }
@@ -1448,7 +1451,8 @@
                     y: ma20Valid.map(v => v.y),
                     type: 'scatter',
                     mode: 'lines',
-                    name: 'MA20',
+                    name: '',
+                    showlegend: false,
                     line: { color: '#8b5cf6', width: 1.5 }
                 });
             }
