@@ -1,6 +1,5 @@
 from models.stock import Stock, AnalysisResult
 from typing import List, Dict
-import random
 import os
 
 class StockAnalyzer:
@@ -30,27 +29,39 @@ class StockAnalyzer:
         )
     
     def _calc_valuation_percentile(self, stock: Stock) -> float:
+        # 基于PE计算估值百分位（确定性算法，不使用随机数）
         if stock.pe and stock.pe > 0:
-            if stock.pe < 10:
-                return random.uniform(5, 25)
+            # PE越低，估值百分位越低（越低估）
+            # PE=5 -> 5%, PE=10 -> 15%, PE=20 -> 35%, PE=30 -> 55%, PE=50 -> 75%, PE=80 -> 90%
+            if stock.pe < 5:
+                return 5.0
+            elif stock.pe < 10:
+                return 5.0 + (stock.pe - 5) * 2.0
             elif stock.pe < 20:
-                return random.uniform(25, 50)
+                return 15.0 + (stock.pe - 10) * 2.0
             elif stock.pe < 30:
-                return random.uniform(50, 70)
+                return 35.0 + (stock.pe - 20) * 2.0
             elif stock.pe < 50:
-                return random.uniform(70, 85)
+                return 55.0 + (stock.pe - 30) * 1.0
+            elif stock.pe < 80:
+                return 75.0 + (stock.pe - 50) * 0.5
             else:
-                return random.uniform(85, 95)
+                return min(95.0, 90.0 + (stock.pe - 80) * 0.1)
         elif stock.pb and stock.pb > 0:
-            if stock.pb < 1:
-                return random.uniform(5, 20)
+            # 基于PB计算
+            if stock.pb < 0.5:
+                return 5.0
+            elif stock.pb < 1:
+                return 5.0 + (stock.pb - 0.5) * 20.0
             elif stock.pb < 2:
-                return random.uniform(20, 45)
+                return 15.0 + (stock.pb - 1) * 15.0
             elif stock.pb < 3:
-                return random.uniform(45, 65)
+                return 30.0 + (stock.pb - 2) * 15.0
+            elif stock.pb < 5:
+                return 45.0 + (stock.pb - 3) * 10.0
             else:
-                return random.uniform(65, 90)
-        return random.uniform(30, 70)
+                return min(90.0, 65.0 + (stock.pb - 5) * 5.0)
+        return 50.0
     
     def _calc_entry_range(self, stock: Stock) -> Dict[str, float]:
         if not stock.price:
@@ -127,8 +138,14 @@ class StockAnalyzer:
     def _extract_risks(self, stock: Stock) -> List[str]:
         risks = []
         
+        # 使用确定性规则，不使用随机数
+        # 根据股票代码的hash值选择风险项，保证同一股票结果一致
+        code_hash = sum(ord(c) for c in stock.code) if stock.code else 0
+        
         common_risks = ["宏观经济波动", "政策变化风险", "行业竞争加剧"]
-        risks.extend(random.sample(common_risks, min(2, len(common_risks))))
+        # 用hash值确定选择哪些风险
+        risks.append(common_risks[code_hash % len(common_risks)])
+        risks.append(common_risks[(code_hash + 1) % len(common_risks)])
         
         industry_risks = {
             "科技": ["技术迭代风险", "人才流失风险"],
@@ -138,7 +155,8 @@ class StockAnalyzer:
             "白酒": ["消费税传言", "需求增速放缓"]
         }
         if stock.industry in industry_risks:
-            risks.append(random.choice(industry_risks[stock.industry]))
+            ind_risks = industry_risks[stock.industry]
+            risks.append(ind_risks[code_hash % len(ind_risks)])
         
         if stock.pe and stock.pe > 50:
             risks.append("高估值透支未来业绩")

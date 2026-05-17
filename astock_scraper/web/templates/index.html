@@ -498,9 +498,119 @@
         }
 
         .chart-placeholder svg {
+
+        .chart-legend {
+            padding: 12px 16px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            margin-top: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 0;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 3px;
+            border-radius: 2px;
+        }
             width: 64px;
+
+        .chart-legend {
+            padding: 12px 16px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            margin-top: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 0;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 3px;
+            border-radius: 2px;
+        }
             height: 64px;
+
+        .chart-legend {
+            padding: 12px 16px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            margin-top: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 0;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 3px;
+            border-radius: 2px;
+        }
             opacity: 0.3;
+
+        .chart-legend {
+            padding: 12px 16px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            margin-top: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 0;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 3px;
+            border-radius: 2px;
+        }
+        }
+
+        .chart-legend {
+            padding: 12px 16px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            margin-top: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 0;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 3px;
+            border-radius: 2px;
         }
 
         .industry-list {
@@ -1028,6 +1138,20 @@
                                 </svg>
                                 <span>点击股票查看趋势图</span>
                             </div>
+                        <div id="chartLegend" class="chart-legend" style="display: none;">
+                            <div class="legend-item">
+                                <span class="legend-color" style="background: #00d4aa;"></span>
+                                <span>收盘价 - 每日收盘价格连线</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color" style="background: #f59e0b;"></span>
+                                <span>MA5 - 5日均线（短期趋势）</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color" style="background: #6366f1;"></span>
+                                <span>MA10 - 10日均线（中期趋势）</span>
+                            </div>
+                        </div>
                         </div>
                         <div id="selectedStockInfo" class="analysis-panel" style="display: none;"></div>
                     </div>
@@ -1454,6 +1578,9 @@
             };
 
             Plotly.newPlot(container, [trace1, trace2, trace3], layout, {responsive: true});
+            
+            // 显示图例说明
+            document.getElementById('chartLegend').style.display = 'block';
         }
 
         async function renderStockInfo(code) {
