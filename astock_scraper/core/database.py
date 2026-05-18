@@ -38,6 +38,8 @@ class Database:
                     entry_min REAL,
                     entry_max REAL,
                     stop_loss REAL,
+                    support_level REAL,
+                    resistance_level REAL,
                     opportunity_points TEXT,
                     core_risks TEXT,
                     industry_rank INTEGER,
@@ -134,12 +136,15 @@ class Database:
                 conn.execute("""
                     INSERT OR REPLACE INTO analysis_results
                     (stock_code, name, valuation_percentile, entry_min, entry_max,
-                     stop_loss, opportunity_points, core_risks, industry_rank,
+                     stop_loss, support_level, resistance_level,
+                     opportunity_points, core_risks, industry_rank,
                      recommendation, recommendation_source, update_time)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     analysis.code, analysis.name, analysis.valuation_percentile,
                     analysis.entry_min, analysis.entry_max, analysis.stop_loss,
+                    getattr(analysis, 'support_level', None),
+                    getattr(analysis, 'resistance_level', None),
                     ",".join(analysis.opportunity_points) if analysis.opportunity_points else "",
                     ",".join(analysis.core_risks) if analysis.core_risks else "",
                     analysis.industry_rank, analysis.recommendation,

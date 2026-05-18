@@ -1188,15 +1188,10 @@
             </select>
             <button class="filter-btn" id="toggleFavoritesBtn" onclick="toggleShowFavorites()">只看关注</button>
             <select class="filter-select" id="sortSelect" onchange="sortStocks()">
-                <option value="industry">按行业</option>
                 <option value="code">按代码</option>
                 <option value="name">按名称</option>
                 <option value="price">按价格</option>
-            </select>
-            <select class="filter-select" id="pageSizeSelect" onchange="changePageSize()">
-                <option value="20">20行/页</option>
-                <option value="30">30行/页</option>
-                <option value="50">50行/页</option>
+                <option value="marketValue">按市值</option>
             </select>
         </div>
 
@@ -1726,7 +1721,15 @@
         function renderPagination(totalPages) {
             const container = document.getElementById('pagination');
             if (totalPages <= 1) {
-                container.innerHTML = '';
+                container.innerHTML = `
+                    <div style="margin-left: auto;">
+                        <select class="filter-select" id="pageSizeSelect" onchange="changePageSize()" style="padding: 6px 12px; font-size: 12px; min-width: auto;">
+                            <option value="20" ${pageSize === 20 ? 'selected' : ''}>20行</option>
+                            <option value="30" ${pageSize === 30 ? 'selected' : ''}>30行</option>
+                            <option value="50" ${pageSize === 50 ? 'selected' : ''}>50行</option>
+                        </select>
+                    </div>
+                `;
                 return;
             }
 
@@ -1752,6 +1755,13 @@
                         <polyline points="9 18 15 12 9 6"></polyline>
                     </svg>
                 </button>
+                <div style="margin-left: auto;">
+                    <select class="filter-select" id="pageSizeSelect" onchange="changePageSize()" style="padding: 6px 12px; font-size: 12px; min-width: auto;">
+                        <option value="20" ${pageSize === 20 ? 'selected' : ''}>20行</option>
+                        <option value="30" ${pageSize === 30 ? 'selected' : ''}>30行</option>
+                        <option value="50" ${pageSize === 50 ? 'selected' : ''}>50行</option>
+                    </select>
+                </div>
             `;
 
             container.innerHTML = html;

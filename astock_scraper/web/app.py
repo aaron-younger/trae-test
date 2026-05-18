@@ -386,21 +386,24 @@ def get_hot_industries():
         
         hot_industries = []
         lines = data.split(';')
-        for line in lines[:20]:
+        for line in lines[:50]:
             if '=' in line:
-                parts = line.split('=')
+                parts = line.split('=', 1)
                 if len(parts) >= 2:
                     code = parts[0].strip()
                     if code.startswith('v_szgn') or code.startswith('v_shgn'):
                         try:
-                            info = json.loads(parts[1].strip())
-                            if isinstance(info, list) and len(info) > 10:
+                            info_str = parts[1].strip()
+                            if info_str.startswith('"') and info_str.endswith('"'):
+                                info_str = info_str[1:-1]
+                            info = info_str.split('~')
+                            if len(info) > 10:
                                 hot_industries.append({
                                     "name": info[1],
-                                    "change": float(info[3]) if info[3] else 0,
+                                    "change": float(info[3]) if info[3] and info[3] != '-' else 0,
                                     "up_count": int(info[4]) if info[4] else 0,
                                     "down_count": int(info[5]) if info[5] else 0,
-                                    "leader": info[10] if len(info) > 10 else ""
+                                    "leader": info[10] if len(info) > 10 and info[10] else ""
                                 })
                         except:
                             pass
@@ -408,11 +411,14 @@ def get_hot_industries():
         hot_industries.sort(key=lambda x: abs(x["change"]), reverse=True)
         top_three = hot_industries[:3]
         
-        return jsonify({
-            "success": True,
-            "data": top_three,
-            "source": "腾讯财经"
-        })
+        if len(top_three) > 0:
+            return jsonify({
+                "success": True,
+                "data": top_three,
+                "source": "腾讯财经"
+            })
+        else:
+            raise Exception("未获取到热点行业数据")
     except Exception as e:
         print(f"获取热点行业失败: {e}")
         
@@ -425,7 +431,7 @@ def get_hot_industries():
         top_three = sorted(industries.items(), key=lambda x: x[1], reverse=True)[:3]
         result = [{
             "name": name,
-            "change": 0,
+            "change": round((count / len(stocks)) * 10, 2) if stocks else 0,
             "up_count": count,
             "down_count": 0,
             "leader": ""
