@@ -1638,6 +1638,7 @@
                         selectedCodes = [];
                         document.getElementById('selectAll').checked = false;
                         await loadStocks();
+                        updateDeleteButton();
                         if (selectedStockCode === null) {
                             document.getElementById('chartPlaceholder').style.display = 'flex';
                             document.getElementById('selectedStockInfo').style.display = 'none';
