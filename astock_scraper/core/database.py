@@ -1,15 +1,60 @@
 import sqlite3
+import shutil
+import os
 from typing import List, Optional
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 from models.stock import Stock, AnalysisResult
 import pandas as pd
 
 class Database:
     def __init__(self, db_path: str = "data/stocks.db"):
         self.db_path = Path(db_path)
+        self.backup_path = self.db_path.parent / "backups"
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        self.backup_path.mkdir(parents=True, exist_ok=True)
         self._init_db()
+        self._auto_backup()
+    
+    def _auto_backup(self):
+        """自动备份数据库，保留最近7天的备份"""
+        try:
+            if self.db_path.exists():
+                backup_filename = f"stocks_{datetime.now().strftime('%Y%m%d_%H%M%S')}.db"
+                backup_full_path = self.backup_path / backup_filename
+                shutil.copy2(self.db_path, backup_full_path)
+                
+                old_backups = sorted(self.backup_path.glob("stocks_*.db"))
+                if len(old_backups) > 7:
+                    for old_backup in old_backups[:-7]:
+                        old_backup.unlink()
+                
+                print(f"数据库备份完成: {backup_filename}")
+        except Exception as e:
+            print(f"备份失败: {e}")
+    
+    def restore_from_backup(self, backup_file: str = None) -> bool:
+        """从备份恢复数据库"""
+        try:
+            backups = sorted(self.backup_path.glob("stocks_*.db"))
+            if not backups:
+                print("没有可用的备份文件")
+                return False
+            
+            if backup_file:
+                backup_path = self.backup_path / backup_file
+                if not backup_path.exists():
+                    print(f"备份文件不存在: {backup_file}")
+                    return False
+            else:
+                backup_path = backups[-1]
+            
+            shutil.copy2(backup_path, self.db_path)
+            print(f"从备份恢复成功: {backup_path.name}")
+            return True
+        except Exception as e:
+            print(f"恢复失败: {e}")
+            return False
     
     def _init_db(self):
         with sqlite3.connect(self.db_path) as conn:
