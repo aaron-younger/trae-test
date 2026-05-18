@@ -958,6 +958,83 @@
             border-top: 1px solid var(--border-color);
         }
 
+        .page-size-select-wrapper {
+            display: inline-block;
+        }
+
+        .page-size-select {
+            padding: 5px 12px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 13px;
+            cursor: pointer;
+            min-width: 70px;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 6px center;
+            padding-right: 28px;
+        }
+
+        .page-size-select:hover {
+            border-color: var(--accent-primary);
+        }
+
+        .page-nav-btn {
+            width: 28px;
+            height: 28px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .page-nav-btn:hover:not(:disabled) {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .page-nav-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .page-num-btn {
+            min-width: 28px;
+            height: 28px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 8px;
+        }
+
+        .page-num-btn:hover:not(.active) {
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+        }
+
+        .page-num-btn.active {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-color: var(--accent-primary);
+            color: white;
+            font-weight: 600;
+        }
+
         .page-btn {
             width: 32px;
             height: 32px;
@@ -1187,12 +1264,6 @@
                 <option value="回避">回避</option>
             </select>
             <button class="filter-btn" id="toggleFavoritesBtn" onclick="toggleShowFavorites()">只看关注</button>
-            <select class="filter-select" id="sortSelect" onchange="sortStocks()">
-                <option value="code">按代码</option>
-                <option value="name">按名称</option>
-                <option value="price">按价格</option>
-                <option value="marketValue">按市值</option>
-            </select>
         </div>
 
         <div class="main-content">
@@ -1481,7 +1552,8 @@
                 industry = document.getElementById('industryFilter').value;
             }
 
-            applyFilters(industry);
+            const recommendation = document.getElementById('recommendationFilter').value;
+            applyFilters(industry, recommendation);
         }
 
         function filterByRecommendation(recommendation = null) {
@@ -1655,9 +1727,9 @@
             const end = start + pageSize;
             const pageStocks = filteredStocks.slice(start, end);
 
+            document.getElementById('stockCount').textContent = `${filteredStocks.length} 只股票`;
             renderTable(pageStocks);
             renderPagination(totalPages);
-            document.getElementById('stockCount').textContent = `${filteredStocks.length} 只股票`;
         }
 
         function renderTable(data) {
@@ -1720,51 +1792,65 @@
 
         function renderPagination(totalPages) {
             const container = document.getElementById('pagination');
-            if (totalPages <= 1) {
-                container.innerHTML = `
-                    <div style="margin-left: auto;">
-                        <select class="filter-select" id="pageSizeSelect" onchange="changePageSize()" style="padding: 6px 12px; font-size: 12px; min-width: auto;">
-                            <option value="20" ${pageSize === 20 ? 'selected' : ''}>20行</option>
-                            <option value="30" ${pageSize === 30 ? 'selected' : ''}>30行</option>
-                            <option value="50" ${pageSize === 50 ? 'selected' : ''}>50行</option>
+            const totalCount = document.getElementById('stockCount').textContent.replace('只股票', '').trim();
+            
+            let html = `
+                <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                    <span style="color: var(--text-muted); font-size: 13px;">共 ${totalCount} 条</span>
+                    <div class="page-size-select-wrapper">
+                        <select class="page-size-select" id="pageSizeSelect" onchange="changePageSize()">
+                            <option value="5" ${pageSize === 5 ? 'selected' : ''}>5条/页</option>
+                            <option value="10" ${pageSize === 10 ? 'selected' : ''}>10条/页</option>
+                            <option value="20" ${pageSize === 20 ? 'selected' : ''}>20条/页</option>
+                            <option value="30" ${pageSize === 30 ? 'selected' : ''}>30条/页</option>
                         </select>
                     </div>
+            `;
+
+            if (totalPages > 1) {
+                html += `
+                    <span style="color: var(--text-muted);">|</span>
+                    <button class="page-nav-btn" onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                    </button>
                 `;
-                return;
-            }
 
-            let html = `
-                <button class="page-btn" onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="15 18 9 12 15 6"></polyline>
-                    </svg>
-                </button>
-            `;
-
-            for (let i = 1; i <= totalPages; i++) {
-                if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
-                    html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
-                } else if (i === currentPage - 2 || i === currentPage + 2) {
-                    html += `<span style="color: var(--text-muted);">...</span>`;
+                for (let i = 1; i <= totalPages; i++) {
+                    if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                        html += `<button class="page-num-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+                    } else if (i === currentPage - 2 || i === currentPage + 2) {
+                        html += `<span style="color: var(--text-muted); margin: 0 4px;">...</span>`;
+                    }
                 }
+
+                html += `
+                    <button class="page-nav-btn" onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </button>
+                    <span style="color: var(--text-muted);">|</span>
+                    <span style="color: var(--text-muted); font-size: 13px;">跳至</span>
+                    <input type="number" id="jumpToPage" min="1" max="${totalPages}" value="${currentPage}" style="width: 50px; padding: 4px 8px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-tertiary); color: var(--text-primary); font-size: 13px; text-align: center;" onkeydown="if(event.key === 'Enter') jumpToPage()">
+                    <span style="color: var(--text-muted); font-size: 13px;">页</span>
+                `;
             }
 
-            html += `
-                <button class="page-btn" onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="9 18 15 12 9 6"></polyline>
-                    </svg>
-                </button>
-                <div style="margin-left: auto;">
-                    <select class="filter-select" id="pageSizeSelect" onchange="changePageSize()" style="padding: 6px 12px; font-size: 12px; min-width: auto;">
-                        <option value="20" ${pageSize === 20 ? 'selected' : ''}>20行</option>
-                        <option value="30" ${pageSize === 30 ? 'selected' : ''}>30行</option>
-                        <option value="50" ${pageSize === 50 ? 'selected' : ''}>50行</option>
-                    </select>
-                </div>
-            `;
-
+            html += `</div>`;
             container.innerHTML = html;
+        }
+
+        function jumpToPage() {
+            const input = document.getElementById('jumpToPage');
+            const page = parseInt(input.value);
+            const totalPages = Math.ceil(filteredStocks.length / pageSize);
+            if (page >= 1 && page <= totalPages) {
+                goToPage(page);
+            } else {
+                input.value = currentPage;
+            }
         }
 
         function goToPage(page) {
