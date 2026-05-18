@@ -1879,7 +1879,7 @@
                 return `
                     <tr onclick="selectStock('${stock.code}')" style="cursor: pointer;" class="${isSelected ? 'selected' : ''}">
                         <td style="text-align: center;">
-                            <input type="checkbox" class="stock-checkbox" value="${stock.code}" onchange="toggleSelectCode('${stock.code}')" checked="${isChecked ? 'checked' : ''}" style="width: 14px; height: 14px; cursor: pointer;" onclick="event.stopPropagation();">
+                            <input type="checkbox" class="stock-checkbox" value="${stock.code}" onchange="toggleSelectCode('${stock.code}')" ${isChecked ? 'checked' : ''} style="width: 14px; height: 14px; cursor: pointer;" onclick="event.stopPropagation();">
                         </td>
                         <td style="text-align: center;">
                             <button class="favorite-btn ${isFavorite ? 'active' : ''}" onclick="event.stopPropagation(); toggleFavorite('${stock.code}')" title="${isFavorite ? '取消关注' : '添加关注'}">
