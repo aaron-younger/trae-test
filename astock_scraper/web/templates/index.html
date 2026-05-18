@@ -1883,11 +1883,18 @@
         async function viewChart(code) {
             try {
                 const response = await fetch(`${API_BASE}/stocks/${code}/chart?days=30`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
                 const result = await response.json();
                 
                 if (result.success) {
                     renderChart(result.data);
                     renderStockInfo(code);
+                } else {
+                    console.error('加载图表失败:', result.error || '未知错误');
                 }
             } catch (error) {
                 console.error('加载图表失败:', error);

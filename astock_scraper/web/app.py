@@ -221,16 +221,23 @@ def scrape_stocks():
 
 @app.route("/api/stocks/<code>/chart", methods=["GET"])
 def get_chart(code):
-    days = int(request.args.get("days", 30))
-    stock = db.get_stock(code)
-    
-    base_price = stock.price if stock and stock.price else 10.0
-    chart_data = get_real_kline_data(code, days, base_price)
-    
-    return jsonify({
-        "success": True,
-        "data": chart_data
-    })
+    try:
+        days = int(request.args.get("days", 30))
+        stock = db.get_stock(code)
+        
+        base_price = stock.price if stock and stock.price else 10.0
+        chart_data = get_real_kline_data(code, days, base_price)
+        
+        return jsonify({
+            "success": True,
+            "data": chart_data
+        })
+    except Exception as e:
+        print(f"获取图表数据失败: {e}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
 
 def get_real_kline_data(code: str, days: int = 30, base_price: float = None) -> dict:
     """从腾讯财经获取真实日K线数据"""
