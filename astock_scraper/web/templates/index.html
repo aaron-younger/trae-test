@@ -1529,44 +1529,131 @@
             }
         }
 
+        function showConfirmDialog(message, onConfirm) {
+            const overlay = document.createElement('div');
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.7);
+                backdrop-filter: blur(4px);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+            `;
+            
+            const dialog = document.createElement('div');
+            dialog.style.cssText = `
+                background: #1e2433;
+                border: 1px solid #2d3748;
+                border-radius: 16px;
+                padding: 24px;
+                width: 90%;
+                max-width: 400px;
+                text-align: center;
+            `;
+            
+            const icon = document.createElement('div');
+            icon.innerHTML = '⚠️';
+            icon.style.fontSize = '48px';
+            icon.style.marginBottom = '16px';
+            
+            const text = document.createElement('p');
+            text.textContent = message;
+            text.style.color = '#e2e8f0';
+            text.style.fontSize = '15px';
+            text.style.lineHeight = '1.6';
+            
+            const buttons = document.createElement('div');
+            buttons.style.display = 'flex';
+            buttons.style.justifyContent = 'center';
+            buttons.style.gap = '12px';
+            buttons.style.marginTop = '24px';
+            
+            const cancelBtn = document.createElement('button');
+            cancelBtn.textContent = '取消';
+            cancelBtn.style.cssText = `
+                padding: 10px 24px;
+                background: #1a1f2e;
+                border: 1px solid #2d3748;
+                border-radius: 8px;
+                color: #94a3b8;
+                font-size: 14px;
+                cursor: pointer;
+                transition: all 0.2s;
+            `;
+            cancelBtn.onclick = () => {
+                document.body.removeChild(overlay);
+            };
+            
+            const confirmBtn = document.createElement('button');
+            confirmBtn.textContent = '确定删除';
+            confirmBtn.style.cssText = `
+                padding: 10px 24px;
+                background: linear-gradient(135deg, #ef4444, #dc2626);
+                border: none;
+                border-radius: 8px;
+                color: white;
+                font-size: 14px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.2s;
+            `;
+            confirmBtn.onclick = () => {
+                document.body.removeChild(overlay);
+                onConfirm();
+            };
+            
+            buttons.appendChild(cancelBtn);
+            buttons.appendChild(confirmBtn);
+            dialog.appendChild(icon);
+            dialog.appendChild(text);
+            dialog.appendChild(buttons);
+            overlay.appendChild(dialog);
+            document.body.appendChild(overlay);
+        }
+
         async function batchDelete() {
             if (selectedCodes.length === 0) return;
             
-            if (!confirm(`确定要删除选中的 ${selectedCodes.length} 只股票吗？此操作不可撤销。`)) return;
-
-            try {
-                showLoading('正在批量删除...');
-                const response = await fetch(`${API_BASE}/stocks/batch_delete`, {
-                    method: 'DELETE',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ codes: selectedCodes })
-                });
-                const result = await response.json();
-                
-                if (result.success) {
-                    selectedCodes.forEach(code => {
-                        if (selectedStockCode === code) {
-                            selectedStockCode = null;
-                        }
+            showConfirmDialog(`确定要删除选中的 ${selectedCodes.length} 只股票吗？此操作不可撤销。`, async () => {
+                try {
+                    showLoading('正在批量删除...');
+                    const response = await fetch(`${API_BASE}/stocks/batch_delete`, {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ codes: selectedCodes })
                     });
-                    selectedCodes = [];
-                    document.getElementById('selectAll').checked = false;
-                    await loadStocks();
-                    if (selectedStockCode === null) {
-                        document.getElementById('chartPlaceholder').style.display = 'flex';
-                        document.getElementById('selectedStockInfo').style.display = 'none';
-                        document.getElementById('chartTitle').textContent = '价格趋势图';
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        selectedCodes.forEach(code => {
+                            if (selectedStockCode === code) {
+                                selectedStockCode = null;
+                            }
+                        });
+                        selectedCodes = [];
+                        document.getElementById('selectAll').checked = false;
+                        await loadStocks();
+                        if (selectedStockCode === null) {
+                            document.getElementById('chartPlaceholder').style.display = 'flex';
+                            document.getElementById('selectedStockInfo').style.display = 'none';
+                            document.getElementById('chartTitle').textContent = '价格趋势图';
+                        }
+                        showToast(`成功删除 ${result.deleted} 只股票`, 'success');
+                    } else {
+                        showToast('删除失败', 'error');
                     }
-                    showToast(`成功删除 ${result.deleted} 只股票`, 'success');
-                } else {
+                    hideLoading();
+                } catch (error) {
+                    console.error('批量删除失败:', error);
+                    hideLoading();
                     showToast('删除失败', 'error');
                 }
-                hideLoading();
-            } catch (error) {
-                console.error('批量删除失败:', error);
-                hideLoading();
-                showToast('删除失败', 'error');
-            }
+            });
         }
 
         async function scrapeData() {
