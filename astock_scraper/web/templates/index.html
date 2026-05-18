@@ -1296,7 +1296,6 @@
                                 <th onclick="sortBy('industry')">行业 <span class="sort-icon">↕</span></th>
                                 <th>概念</th>
                                 <th onclick="sortBy('recommendation')">推荐 <span class="sort-icon">↕</span></th>
-                                <th style="width: 80px;">操作</th>
                             </tr>
                         </thead>
                         <tbody id="stockTableBody">
@@ -1852,7 +1851,7 @@
             if (data.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="10">
+                        <td colspan="9">
                             <div class="empty-state">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
@@ -1895,14 +1894,6 @@
                         <td>${stock.industry || 'N/A'}</td>
                         <td>${concepts.map(c => `<span class="tag">${c}</span>`).join('')}</td>
                         <td><span class="recommendation ${recClass}">${rec}</span></td>
-                        <td>
-                            <button class="action-btn delete" onclick="event.stopPropagation(); deleteStock('${stock.code}')" title="删除">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polyline points="3 6 5 6 21 6"></polyline>
-                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                </svg>
-                            </button>
-                        </td>
                     </tr>
                 `;
             }).join('');
