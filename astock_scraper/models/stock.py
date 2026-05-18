@@ -71,6 +71,8 @@ class AnalysisResult:
     entry_min: Optional[float] = None
     entry_max: Optional[float] = None
     stop_loss: Optional[float] = None
+    support_level: Optional[float] = None
+    resistance_level: Optional[float] = None
     opportunity_points: List[str] = None
     core_risks: List[str] = None
     industry_rank: Optional[int] = None
@@ -91,6 +93,8 @@ class AnalysisResult:
             "entry_min": self.entry_min,
             "entry_max": self.entry_max,
             "stop_loss": self.stop_loss,
+            "support_level": self.support_level,
+            "resistance_level": self.resistance_level,
             "opportunity_points": ",".join(self.opportunity_points) if self.opportunity_points else "",
             "core_risks": ",".join(self.core_risks) if self.core_risks else "",
             "industry_rank": self.industry_rank,
@@ -114,6 +118,8 @@ class AnalysisResult:
             entry_min=data.get("entry_min"),
             entry_max=data.get("entry_max"),
             stop_loss=data.get("stop_loss"),
+            support_level=data.get("support_level"),
+            resistance_level=data.get("resistance_level"),
             opportunity_points=opp_points,
             core_risks=core_risks,
             industry_rank=data.get("industry_rank"),

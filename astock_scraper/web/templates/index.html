@@ -26,6 +26,139 @@
             --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
         }
 
+        .splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
+        .splash-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .splash-logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            box-shadow: 0 8px 32px rgba(0, 212, 170, 0.3);
+            margin-bottom: 24px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .splash-title {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .splash-subtitle {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 32px;
+        }
+
+        .progress-container {
+            width: 280px;
+            height: 6px;
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 3px;
+            transition: width 0.3s ease;
+            animation: shimmer 2s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        .progress-text {
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        .splash-error {
+            display: none;
+            text-align: center;
+            padding: 24px;
+        }
+
+        .splash-error.show {
+            display: block;
+        }
+
+        .error-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+        }
+
+        .error-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .error-message {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        .retry-btn {
+            padding: 12px 32px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .retry-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 212, 170, 0.4);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -956,6 +1089,24 @@
     </style>
 </head>
 <body>
+    <div class="splash-screen" id="splashScreen">
+        <div class="splash-content" id="splashContent">
+            <div class="splash-logo">📈</div>
+            <div class="splash-title">A股数据采集分析系统</div>
+            <div class="splash-subtitle">正在连接服务...</div>
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar" style="width: 30%;"></div>
+            </div>
+            <div class="progress-text" id="progressText">正在检查服务状态...</div>
+        </div>
+        <div class="splash-error" id="splashError">
+            <div class="error-icon">⚠️</div>
+            <div class="error-title">服务连接失败</div>
+            <div class="error-message" id="errorMessage">无法连接到服务器，请检查服务是否已启动。</div>
+            <button class="retry-btn" onclick="checkServerStatus()">重试连接</button>
+        </div>
+    </div>
+
     <div class="container">
         <header>
             <div class="logo">
@@ -1098,10 +1249,11 @@
 
                 <div class="card">
                     <div class="card-header">
-                        <div class="card-title">行业分布</div>
+                        <div class="card-title">热点行业</div>
+                        <span id="hotIndustrySource" style="font-size: 11px; color: var(--text-muted);"></span>
                     </div>
                     <div class="card-body">
-                        <div class="industry-list" id="industryList"></div>
+                        <div class="industry-list" id="hotIndustryList"></div>
                     </div>
                 </div>
             </div>
@@ -1156,6 +1308,60 @@
     </div>
 
     <script>
+        let connectionRetries = 0;
+        const maxRetries = 5;
+
+        async function checkServerStatus() {
+            connectionRetries++;
+            const splashScreen = document.getElementById('splashScreen');
+            const splashContent = document.getElementById('splashContent');
+            const splashError = document.getElementById('splashError');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const errorMessage = document.getElementById('errorMessage');
+
+            splashContent.style.display = 'block';
+            splashError.classList.remove('show');
+
+            try {
+                progressBar.style.width = '30%';
+                progressText.textContent = '正在检查服务状态...';
+                
+                const response = await fetch('/api/health', { timeout: 3000 });
+                const result = await response.json();
+
+                if (result.success) {
+                    progressBar.style.width = '70%';
+                    progressText.textContent = '服务正常，正在加载数据...';
+                    
+                    setTimeout(() => {
+                        progressBar.style.width = '100%';
+                        progressText.textContent = '即将进入系统...';
+                        
+                        setTimeout(() => {
+                            splashScreen.classList.add('hidden');
+                            loadStocks();
+                        }, 500);
+                    }, 800);
+                } else {
+                    throw new Error('服务状态异常');
+                }
+            } catch (error) {
+                console.error('连接失败:', error);
+                
+                if (connectionRetries < maxRetries) {
+                    progressBar.style.width = '50%';
+                    progressText.textContent = `连接失败，正在重试 (${connectionRetries}/${maxRetries})...`;
+                    
+                    setTimeout(checkServerStatus, 2000);
+                } else {
+                    splashContent.style.display = 'none';
+                    splashError.classList.add('show');
+                    errorMessage.textContent = `连接失败：${error.message || '无法连接到服务器'}`;
+                }
+            }
+        }
+
         let stocks = [];
         let filteredStocks = [];
         let currentPage = 1;
@@ -1179,7 +1385,7 @@
                     filteredStocks = [...stocks];
                     updateStats();
                     renderIndustryFilter();
-                    renderIndustryList();
+                    renderHotIndustryList();
                     filterAndRender();
                 }
                 hideLoading();
@@ -1237,25 +1443,40 @@
             });
         }
 
-        function renderIndustryList() {
-            const industryCount = {};
-            stocks.forEach(s => {
-                if (s.industry) {
-                    industryCount[s.industry] = (industryCount[s.industry] || 0) + 1;
+        async function renderHotIndustryList() {
+            try {
+                const response = await fetch(`${API_BASE}/hot_industries`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    const hotIndustries = result.data;
+                    const source = result.source || '本地数据';
+                    
+                    document.getElementById('hotIndustrySource').textContent = `数据来源: ${source}`;
+                    
+                    const container = document.getElementById('hotIndustryList');
+                    container.innerHTML = hotIndustries.map((industry, index) => {
+                        const change = industry.change || 0;
+                        const isUp = change >= 0;
+                        const changeColor = isUp ? 'var(--accent-red)' : 'var(--accent-green)';
+                        
+                        return `
+                            <div class="industry-item" onclick="filterByIndustry('${industry.name}')">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="width: 18px; height: 18px; border-radius: 50%; background: ${index === 0 ? '#fbbf24' : index === 1 ? '#9ca3af' : '#d97706'}; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white;">${index + 1}</span>
+                                    <span class="industry-name">${industry.name}</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    ${industry.leader ? `<span style="font-size: 11px; color: var(--text-muted);">${industry.leader}</span>` : ''}
+                                    <span style="font-size: 12px; font-weight: 500; color: ${changeColor};">${isUp ? '+' : ''}${change.toFixed(2)}%</span>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
                 }
-            });
-
-            const sorted = Object.entries(industryCount)
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 8);
-
-            const container = document.getElementById('industryList');
-            container.innerHTML = sorted.map(([name, count]) => `
-                <div class="industry-item" onclick="filterByIndustry('${name}')">
-                    <span class="industry-name">${name}</span>
-                    <span class="industry-count">${count}只</span>
-                </div>
-            `).join('');
+            } catch (error) {
+                console.error('加载热点行业失败:', error);
+            }
         }
 
         function filterByIndustry(industry = null) {
@@ -1690,6 +1911,14 @@
                     <span class="analysis-label">止损位</span>
                     <span class="analysis-value" style="color: var(--accent-red);">${stock.analysis?.stop_loss?.toFixed(2) || 'N/A'}</span>
                 </div>
+                <div class="analysis-item">
+                    <span class="analysis-label">支撑位</span>
+                    <span class="analysis-value" style="color: var(--accent-green);">${stock.analysis?.support_level?.toFixed(2) || 'N/A'}</span>
+                </div>
+                <div class="analysis-item">
+                    <span class="analysis-label">压力位</span>
+                    <span class="analysis-value" style="color: var(--accent-red);">${stock.analysis?.resistance_level?.toFixed(2) || 'N/A'}</span>
+                </div>
                 ${oppArray.length > 0 ? `
                 <div class="analysis-item" style="flex-direction: column; gap: 6px;">
                     <span class="analysis-label">机会要点</span>
@@ -1702,6 +1931,10 @@
                     <div>${riskArray.map(r => `<span class="tag" style="background: rgba(239, 68, 68, 0.2); color: var(--accent-red);">${r}</span>`).join('')}</div>
                 </div>
                 ` : ''}
+                <div class="analysis-item" style="flex-direction: column; gap: 4px; padding-top: 8px; margin-top: 8px; border-top: 1px dashed var(--border-color);">
+                    <span class="analysis-label" style="font-size: 10px; color: var(--text-muted);">数据来源</span>
+                    <span style="font-size: 10px; color: var(--text-muted);">${stock.analysis?.recommendation_source || '腾讯财经 / 同花顺'}</span>
+                </div>
             `;
         }
 
@@ -1874,7 +2107,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             loadFavorites();
-            loadStocks();
+            checkServerStatus();
         });
     </script>
 </body>

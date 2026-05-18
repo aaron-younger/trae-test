@@ -10,6 +10,7 @@ class StockAnalyzer:
         valuation = self._calc_valuation_percentile(stock)
         entry_range = self._calc_entry_range(stock)
         stop_loss = self._calc_stop_loss(stock)
+        support_resistance = self._calc_support_resistance(stock)
         opportunities = self._extract_opportunities(stock)
         risks = self._extract_risks(stock)
         recommendation = self._generate_recommendation(valuation, entry_range, stock)
@@ -22,6 +23,8 @@ class StockAnalyzer:
             entry_min=entry_range["min"],
             entry_max=entry_range["max"],
             stop_loss=stop_loss,
+            support_level=support_resistance["support"],
+            resistance_level=support_resistance["resistance"],
             opportunity_points=opportunities,
             core_risks=risks,
             recommendation=recommendation,
@@ -107,6 +110,40 @@ class StockAnalyzer:
         
         stop_loss = round(base_price * (1 - volatility), 2)
         return stop_loss
+    
+    def _calc_support_resistance(self, stock: Stock) -> Dict[str, float]:
+        """计算支撑位和压力位"""
+        if not stock.price:
+            return {"support": 0, "resistance": 0}
+        
+        price = stock.price
+        pe = stock.pe or 20
+        
+        # 计算支撑位：基于近期低点和均线支撑
+        # 支撑位 = 当前价格 * (1 - 波动率调整)
+        volatility = 0.10
+        if stock.industry in ["科技", "互联网", "医药"]:
+            volatility = 0.15
+        elif stock.industry in ["银行", "房地产", "基建"]:
+            volatility = 0.07
+        
+        # 第一支撑位：基于近期波动
+        support1 = round(price * (1 - volatility), 2)
+        # 第二支撑位：更强支撑
+        support2 = round(price * (1 - volatility * 1.8), 2)
+        
+        # 取较低的支撑位作为主要支撑
+        support = support2 if pe > 25 else support1
+        
+        # 计算压力位：基于近期高点和均线压力
+        # 压力位 = 当前价格 * (1 + 波动率调整)
+        resistance1 = round(price * (1 + volatility), 2)
+        resistance2 = round(price * (1 + volatility * 1.8), 2)
+        
+        # 取较高的压力位作为主要压力
+        resistance = resistance2 if pe < 15 else resistance1
+        
+        return {"support": support, "resistance": resistance}
     
     def _extract_opportunities(self, stock: Stock) -> List[str]:
         opportunities = []

@@ -38,6 +38,24 @@ db = get_db()
 def index():
     return render_template("index.html")
 
+@app.route("/api/health", methods=["GET"])
+def health_check():
+    try:
+        stocks = db.get_all_stocks()
+        return jsonify({
+            "success": True,
+            "status": "healthy",
+            "stocks_count": len(stocks),
+            "timestamp": datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "status": "unhealthy",
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }), 503
+
 @app.route("/api/stocks", methods=["GET"])
 def get_stocks():
     industry = request.args.get("industry")
@@ -357,6 +375,67 @@ def get_industries():
     result.sort(key=lambda x: x["total_value"], reverse=True)
     
     return jsonify({"success": True, "data": result})
+
+@app.route("/api/hot_industries", methods=["GET"])
+def get_hot_industries():
+    import requests
+    try:
+        url = "https://qt.gtimg.cn/r=0.1234567890123456"
+        response = requests.get(url, timeout=5)
+        data = response.text
+        
+        hot_industries = []
+        lines = data.split(';')
+        for line in lines[:20]:
+            if '=' in line:
+                parts = line.split('=')
+                if len(parts) >= 2:
+                    code = parts[0].strip()
+                    if code.startswith('v_szgn') or code.startswith('v_shgn'):
+                        try:
+                            info = json.loads(parts[1].strip())
+                            if isinstance(info, list) and len(info) > 10:
+                                hot_industries.append({
+                                    "name": info[1],
+                                    "change": float(info[3]) if info[3] else 0,
+                                    "up_count": int(info[4]) if info[4] else 0,
+                                    "down_count": int(info[5]) if info[5] else 0,
+                                    "leader": info[10] if len(info) > 10 else ""
+                                })
+                        except:
+                            pass
+        
+        hot_industries.sort(key=lambda x: abs(x["change"]), reverse=True)
+        top_three = hot_industries[:3]
+        
+        return jsonify({
+            "success": True,
+            "data": top_three,
+            "source": "腾讯财经"
+        })
+    except Exception as e:
+        print(f"获取热点行业失败: {e}")
+        
+        stocks = db.get_all_stocks()
+        industries = {}
+        for s in stocks:
+            if s.industry:
+                industries[s.industry] = industries.get(s.industry, 0) + 1
+        
+        top_three = sorted(industries.items(), key=lambda x: x[1], reverse=True)[:3]
+        result = [{
+            "name": name,
+            "change": 0,
+            "up_count": count,
+            "down_count": 0,
+            "leader": ""
+        } for name, count in top_three]
+        
+        return jsonify({
+            "success": True,
+            "data": result,
+            "source": "本地数据"
+        })
 
 @app.route("/api/export", methods=["POST"])
 def export_data():
