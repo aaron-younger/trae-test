@@ -379,69 +379,87 @@ def get_industries():
 @app.route("/api/hot_industries", methods=["GET"])
 def get_hot_industries():
     import requests
-    try:
-        url = "https://qt.gtimg.cn/r=0.1234567890123456"
-        response = requests.get(url, timeout=5)
-        data = response.text
-        
-        hot_industries = []
-        lines = data.split(';')
-        for line in lines[:50]:
-            if '=' in line:
-                parts = line.split('=', 1)
-                if len(parts) >= 2:
-                    code = parts[0].strip()
-                    if code.startswith('v_szgn') or code.startswith('v_shgn'):
+    
+    sources = [
+        ("腾讯财经", "https://qt.gtimg.cn/r=0.1234567890123456"),
+        ("新浪财经", "https://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/Market_Center.getHQNodeData?num=20&sort=changepercent&asc=0&node=industry"),
+    ]
+    
+    for source_name, url in sources:
+        try:
+            response = requests.get(url, timeout=8)
+            
+            if source_name == "腾讯财经":
+                data = response.text
+                hot_industries = []
+                lines = data.split(';')
+                for line in lines[:50]:
+                    if '=' in line:
+                        parts = line.split('=', 1)
+                        if len(parts) >= 2:
+                            code = parts[0].strip()
+                            if code.startswith('v_szgn') or code.startswith('v_shgn'):
+                                try:
+                                    info_str = parts[1].strip()
+                                    if info_str.startswith('"') and info_str.endswith('"'):
+                                        info_str = info_str[1:-1]
+                                    info = info_str.split('~')
+                                    if len(info) > 10:
+                                        hot_industries.append({
+                                            "name": info[1],
+                                            "change": float(info[3]) if info[3] and info[3] != '-' else 0,
+                                            "up_count": int(info[4]) if info[4] else 0,
+                                            "down_count": int(info[5]) if info[5] else 0,
+                                            "leader": info[10] if len(info) > 10 and info[10] else ""
+                                        })
+                                except:
+                                    pass
+                
+                hot_industries.sort(key=lambda x: abs(x["change"]), reverse=True)
+                top_three = hot_industries[:3]
+                
+                if len(top_three) > 0:
+                    return jsonify({
+                        "success": True,
+                        "data": top_three,
+                        "source": source_name
+                    })
+            
+            elif source_name == "新浪财经":
+                data = response.json()
+                if isinstance(data, list) and len(data) > 0:
+                    hot_industries = []
+                    for item in data[:10]:
                         try:
-                            info_str = parts[1].strip()
-                            if info_str.startswith('"') and info_str.endswith('"'):
-                                info_str = info_str[1:-1]
-                            info = info_str.split('~')
-                            if len(info) > 10:
-                                hot_industries.append({
-                                    "name": info[1],
-                                    "change": float(info[3]) if info[3] and info[3] != '-' else 0,
-                                    "up_count": int(info[4]) if info[4] else 0,
-                                    "down_count": int(info[5]) if info[5] else 0,
-                                    "leader": info[10] if len(info) > 10 and info[10] else ""
-                                })
+                            hot_industries.append({
+                                "name": item.get("name", ""),
+                                "change": float(item.get("changepercent", "0")),
+                                "up_count": 0,
+                                "down_count": 0,
+                                "leader": item.get("symbol", "")
+                            })
                         except:
                             pass
+                    
+                    hot_industries.sort(key=lambda x: abs(x["change"]), reverse=True)
+                    top_three = hot_industries[:3]
+                    
+                    if len(top_three) > 0:
+                        return jsonify({
+                            "success": True,
+                            "data": top_three,
+                            "source": source_name
+                        })
         
-        hot_industries.sort(key=lambda x: abs(x["change"]), reverse=True)
-        top_three = hot_industries[:3]
-        
-        if len(top_three) > 0:
-            return jsonify({
-                "success": True,
-                "data": top_three,
-                "source": "腾讯财经"
-            })
-        else:
-            raise Exception("未获取到热点行业数据")
-    except Exception as e:
-        print(f"获取热点行业失败: {e}")
-        
-        stocks = db.get_all_stocks()
-        industries = {}
-        for s in stocks:
-            if s.industry:
-                industries[s.industry] = industries.get(s.industry, 0) + 1
-        
-        top_three = sorted(industries.items(), key=lambda x: x[1], reverse=True)[:3]
-        result = [{
-            "name": name,
-            "change": round((count / len(stocks)) * 10, 2) if stocks else 0,
-            "up_count": count,
-            "down_count": 0,
-            "leader": ""
-        } for name, count in top_three]
-        
-        return jsonify({
-            "success": True,
-            "data": result,
-            "source": "本地数据"
-        })
+        except Exception as e:
+            print(f"从 {source_name} 获取热点行业失败: {e}")
+            continue
+    
+    return jsonify({
+        "success": True,
+        "data": [],
+        "source": "暂无数据"
+    })
 
 @app.route("/api/export", methods=["POST"])
 def export_data():
