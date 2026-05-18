@@ -158,6 +158,25 @@ def delete_stock(code):
     success = db.delete_stock(code)
     return jsonify({"success": success})
 
+@app.route("/api/stocks/batch_delete", methods=["DELETE"])
+def batch_delete_stocks():
+    data = request.get_json()
+    codes = data.get("codes", [])
+    
+    if not codes or not isinstance(codes, list):
+        return jsonify({"success": False, "error": "请提供要删除的股票代码列表"}), 400
+    
+    deleted_count = 0
+    for code in codes:
+        if db.delete_stock(code):
+            deleted_count += 1
+    
+    return jsonify({
+        "success": True,
+        "deleted": deleted_count,
+        "total_requested": len(codes)
+    })
+
 @app.route("/api/stocks/scrape", methods=["POST"])
 def scrape_stocks():
     data = request.get_json() or {}

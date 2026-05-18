@@ -1270,12 +1270,24 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">股票列表</div>
-                    <span id="stockCount" style="color: var(--text-muted); font-size: 13px;">0 只股票</span>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span id="stockCount" style="color: var(--text-muted); font-size: 13px;">0 只股票</span>
+                        <button class="btn btn-danger" id="batchDeleteBtn" onclick="batchDelete()" style="display: none;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                            删除选中
+                        </button>
+                    </div>
                 </div>
                 <div class="table-wrapper">
                     <table>
                         <thead>
                             <tr>
+                                <th style="width: 40px;">
+                                    <input type="checkbox" id="selectAll" onchange="toggleSelectAll()" style="width: 16px; height: 16px; cursor: pointer;">
+                                </th>
                                 <th>关注</th>
                                 <th onclick="sortBy('code')">代码 <span class="sort-icon">↕</span></th>
                                 <th onclick="sortBy('name')">名称 <span class="sort-icon">↕</span></th>
@@ -1284,7 +1296,7 @@
                                 <th onclick="sortBy('industry')">行业 <span class="sort-icon">↕</span></th>
                                 <th>概念</th>
                                 <th onclick="sortBy('recommendation')">推荐 <span class="sort-icon">↕</span></th>
-                                <th>操作</th>
+                                <th style="width: 80px;">操作</th>
                             </tr>
                         </thead>
                         <tbody id="stockTableBody">
@@ -1437,6 +1449,7 @@
         let favorites = [];
         let showOnlyFavorites = false;
         let selectedStockCode = null;
+        let selectedCodes = [];
 
         const API_BASE = '/api';
 
@@ -1449,6 +1462,7 @@
                 if (result.success) {
                     stocks = result.data;
                     filteredStocks = [...stocks];
+                    selectedCodes = [];
                     updateStats();
                     renderIndustryFilter();
                     renderHotIndustryList();
@@ -1459,6 +1473,100 @@
                 console.error('加载失败:', error);
                 hideLoading();
                 showToast('数据加载失败', 'error');
+            }
+        }
+
+        function toggleSelectAll() {
+            const selectAll = document.getElementById('selectAll');
+            const checkboxes = document.querySelectorAll('.stock-checkbox');
+            
+            if (selectAll.checked) {
+                selectedCodes = [];
+                checkboxes.forEach(cb => {
+                    cb.checked = true;
+                    if (!selectedCodes.includes(cb.value)) {
+                        selectedCodes.push(cb.value);
+                    }
+                });
+            } else {
+                checkboxes.forEach(cb => {
+                    cb.checked = false;
+                });
+                selectedCodes = [];
+            }
+            updateDeleteButton();
+        }
+
+        function toggleSelectCode(code) {
+            const index = selectedCodes.indexOf(code);
+            if (index > -1) {
+                selectedCodes.splice(index, 1);
+            } else {
+                selectedCodes.push(code);
+            }
+            
+            const selectAll = document.getElementById('selectAll');
+            const checkboxes = document.querySelectorAll('.stock-checkbox');
+            selectAll.checked = checkboxes.length > 0 && checkboxes.length === selectedCodes.length;
+            
+            updateDeleteButton();
+        }
+
+        function updateDeleteButton() {
+            const deleteBtn = document.getElementById('batchDeleteBtn');
+            if (deleteBtn) {
+                if (selectedCodes.length > 0) {
+                    deleteBtn.style.display = 'flex';
+                    deleteBtn.innerHTML = `
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                        删除选中 (${selectedCodes.length})
+                    `;
+                } else {
+                    deleteBtn.style.display = 'none';
+                }
+            }
+        }
+
+        async function batchDelete() {
+            if (selectedCodes.length === 0) return;
+            
+            if (!confirm(`确定要删除选中的 ${selectedCodes.length} 只股票吗？此操作不可撤销。`)) return;
+
+            try {
+                showLoading('正在批量删除...');
+                const response = await fetch(`${API_BASE}/stocks/batch_delete`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ codes: selectedCodes })
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    selectedCodes.forEach(code => {
+                        if (selectedStockCode === code) {
+                            selectedStockCode = null;
+                        }
+                    });
+                    selectedCodes = [];
+                    document.getElementById('selectAll').checked = false;
+                    await loadStocks();
+                    if (selectedStockCode === null) {
+                        document.getElementById('chartPlaceholder').style.display = 'flex';
+                        document.getElementById('selectedStockInfo').style.display = 'none';
+                        document.getElementById('chartTitle').textContent = '价格趋势图';
+                    }
+                    showToast(`成功删除 ${result.deleted} 只股票`, 'success');
+                } else {
+                    showToast('删除失败', 'error');
+                }
+                hideLoading();
+            } catch (error) {
+                console.error('批量删除失败:', error);
+                hideLoading();
+                showToast('删除失败', 'error');
             }
         }
 
@@ -1766,9 +1874,13 @@
                 const recClass = getRecommendationClass(rec);
                 const isSelected = selectedStockCode === stock.code;
                 const isFavorite = favorites.includes(stock.code);
+                const isChecked = selectedCodes.includes(stock.code);
 
                 return `
                     <tr onclick="selectStock('${stock.code}')" style="cursor: pointer;" class="${isSelected ? 'selected' : ''}">
+                        <td style="text-align: center;">
+                            <input type="checkbox" class="stock-checkbox" value="${stock.code}" onchange="toggleSelectCode('${stock.code}')" checked="${isChecked ? 'checked' : ''}" style="width: 14px; height: 14px; cursor: pointer;" onclick="event.stopPropagation();">
+                        </td>
                         <td style="text-align: center;">
                             <button class="favorite-btn ${isFavorite ? 'active' : ''}" onclick="event.stopPropagation(); toggleFavorite('${stock.code}')" title="${isFavorite ? '取消关注' : '添加关注'}">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="${isFavorite ? '#fbbf24' : 'none'}" stroke="${isFavorite ? '#fbbf24' : '#9ca3af'}" stroke-width="2">
@@ -1784,7 +1896,7 @@
                         <td>${concepts.map(c => `<span class="tag">${c}</span>`).join('')}</td>
                         <td><span class="recommendation ${recClass}">${rec}</span></td>
                         <td>
-                            <button class="action-btn delete" onclick="deleteStock('${stock.code}')" title="删除">
+                            <button class="action-btn delete" onclick="event.stopPropagation(); deleteStock('${stock.code}')" title="删除">
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <polyline points="3 6 5 6 21 6"></polyline>
                                     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
