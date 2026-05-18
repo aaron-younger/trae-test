@@ -158,15 +158,16 @@
         }
 
         .search-bar {
-            background: var(--bg-secondary);
+            background: linear-gradient(145deg, var(--bg-secondary), var(--bg-tertiary));
             border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 16px 20px;
+            border-radius: 16px;
+            padding: 18px 22px;
             margin-bottom: 24px;
             display: flex;
-            gap: 16px;
+            gap: 14px;
             flex-wrap: wrap;
             align-items: center;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
         }
 
         .search-input-group {
@@ -177,43 +178,57 @@
 
         .search-input {
             width: 100%;
-            padding: 12px 16px 12px 44px;
+            padding: 14px 18px 14px 50px;
             background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
             color: var(--text-primary);
             font-size: 14px;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 500;
         }
 
         .search-input:focus {
             outline: none;
             border-color: var(--accent-primary);
-            box-shadow: 0 0 0 3px rgba(0, 212, 170, 0.1);
+            box-shadow: 0 0 0 4px rgba(0, 212, 170, 0.15);
+            background: var(--bg-card);
         }
 
         .search-icon {
             position: absolute;
-            left: 14px;
+            left: 16px;
             top: 50%;
             transform: translateY(-50%);
             color: var(--text-muted);
+            width: 20px;
+            height: 20px;
         }
 
         .filter-select {
             padding: 12px 16px;
-            background: var(--bg-tertiary);
+            background: linear-gradient(145deg, var(--bg-tertiary), var(--bg-secondary));
             border: 1px solid var(--border-color);
-            border-radius: 8px;
+            border-radius: 12px;
             color: var(--text-primary);
-            font-size: 14px;
+            font-size: 13px;
             cursor: pointer;
-            min-width: 150px;
+            min-width: 140px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .filter-select:hover {
+            border-color: var(--accent-primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 212, 170, 0.2);
         }
 
         .filter-select:focus {
             outline: none;
             border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(0, 212, 170, 0.15);
         }
 
         .stats-grid {
@@ -492,24 +507,48 @@
         }
 
         .filter-btn {
-            padding: 6px 12px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
+            padding: 12px 20px;
+            border: 2px solid transparent;
+            border-radius: 12px;
             cursor: pointer;
             font-size: 13px;
-            background: var(--bg-tertiary);
+            background: linear-gradient(145deg, var(--bg-tertiary), var(--bg-secondary));
             color: var(--text-secondary);
-            transition: all 0.2s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .filter-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s;
         }
 
         .filter-btn:hover {
-            background: var(--bg-secondary);
+            transform: translateY(-3px);
+            border-color: var(--accent-primary);
+            color: var(--text-primary);
+            box-shadow: 0 6px 20px rgba(0, 212, 170, 0.25);
+        }
+
+        .filter-btn:hover::before {
+            left: 100%;
         }
 
         .filter-btn.active {
-            background: var(--accent-primary);
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
             color: white;
             border-color: var(--accent-primary);
+            box-shadow: 0 4px 15px rgba(0, 212, 170, 0.4);
+            transform: translateY(-2px);
         }
 
         .sidebar {
@@ -1264,29 +1303,28 @@
         }
 
         function toggleFavorite(code) {
+            console.log('Toggle favorite for:', code, 'Current favorites:', favorites);
+            
             const index = favorites.indexOf(code);
+            let isAdding = false;
             if (index > -1) {
                 favorites.splice(index, 1);
             } else {
                 favorites.push(code);
+                isAdding = true;
             }
             
             localStorage.setItem('stockFavorites', JSON.stringify(favorites));
-            updateFavoriteButton(code);
-        }
-
-        function updateFavoriteButton(code) {
-            const btn = document.querySelector(`button.favorite-btn[data-code="${code}"]`);
-            if (btn) {
-                const isFavorite = favorites.includes(code);
-                btn.classList.toggle('active', isFavorite);
-                btn.setAttribute('title', isFavorite ? '取消关注' : '添加关注');
-                const svg = btn.querySelector('svg');
-                if (svg) {
-                    svg.setAttribute('fill', isFavorite ? '#fbbf24' : 'none');
-                    svg.setAttribute('stroke', isFavorite ? '#fbbf24' : '#9ca3af');
-                }
-            }
+            
+            console.log('New favorites:', favorites);
+            
+            // 重新应用筛选并渲染，确保按钮状态更新
+            const industry = document.getElementById('industryFilter').value;
+            const recommendation = document.getElementById('recommendationFilter').value;
+            applyFilters(industry, recommendation);
+            
+            // 显示提示
+            showToast(isAdding ? '已添加关注' : '已取消关注', 'success');
         }
 
         function toggleShowFavorites() {

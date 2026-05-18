@@ -7,21 +7,32 @@ from datetime import datetime
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from core.scraper import ScraperFactory
-from core.cleaner import CleanerPipeline
-from core.analyzer import StockAnalyzer
-from core.database import Database
-from visualization.charts import ChartGenerator
-from models.stock import Stock, AnalysisResult
+# 延迟导入 - 按需加载
+def get_db():
+    from core.database import Database
+    return Database()
+
+def get_scraper_factory():
+    from core.scraper import ScraperFactory
+    return ScraperFactory()
+
+def get_cleaner():
+    from core.cleaner import CleanerPipeline
+    return CleanerPipeline()
+
+def get_analyzer():
+    from core.analyzer import StockAnalyzer
+    return StockAnalyzer()
+
+def get_chart_gen():
+    from visualization.charts import ChartGenerator
+    return ChartGenerator()
 
 app = Flask(__name__)
 CORS(app)
 
-db = Database()
-scraper_factory = ScraperFactory()
-cleaner = CleanerPipeline()
-analyzer = StockAnalyzer()
-chart_gen = ChartGenerator()
+# 预加载数据库
+db = get_db()
 
 @app.route("/")
 def index():
@@ -80,6 +91,7 @@ def search_stocks():
 
 @app.route("/api/stocks", methods=["POST"])
 def add_stock():
+    from models.stock import Stock
     data = request.get_json()
     code = data.get("code")
     name = data.get("name")
@@ -87,7 +99,7 @@ def add_stock():
     if not code:
         return jsonify({"success": False, "error": "股票代码不能为空"}), 400
     
-    scraper = scraper_factory.get_scraper("tencent")
+    scraper = get_scraper_factory().get_scraper("tencent")
     stock = scraper.fetch_stock_info(code)
     
     if not stock:
@@ -95,7 +107,7 @@ def add_stock():
     
     db.save_stock(stock)
     
-    analysis = analyzer.analyze(stock)
+    analysis = get_analyzer().analyze(stock)
     db.save_analysis(analysis)
     
     return jsonify({
@@ -137,7 +149,7 @@ def scrape_stocks():
     if not codes and not keyword:
         codes = ["000001", "000002", "600519", "000858", "601318"]
     elif keyword:
-        scraper = scraper_factory.get_scraper("tencent")
+        scraper = get_scraper_factory().get_scraper("tencent")
         search_results = scraper.search_stocks(keyword)
         codes = [s.code for s in search_results]
     
@@ -146,7 +158,7 @@ def scrape_stocks():
     for i, code in enumerate(codes):
         try:
             print(f"正在采集第 {i+1}/{len(codes)} 只股票: {code}")
-            scraper = scraper_factory.get_scraper("tencent")
+            scraper = get_scraper_factory().get_scraper("tencent")
             stock = scraper.fetch_stock_info(code)
             if stock:
                 raw_stocks.append(stock)
@@ -156,13 +168,13 @@ def scrape_stocks():
             # 遇到小错误继续处理下一只
             continue
     
-    cleaned_stocks = cleaner.process(raw_stocks)
+    cleaned_stocks = get_cleaner().process(raw_stocks)
     saved_count = db.save_stocks(cleaned_stocks)
     
     analyses = []
     for stock in cleaned_stocks:
         try:
-            analysis = analyzer.analyze(stock)
+            analysis = get_analyzer().analyze(stock)
             db.save_analysis(analysis)
             analyses.append(analysis)
         except Exception as e:
@@ -305,7 +317,7 @@ def analyze_stock(code):
     if not stock:
         return jsonify({"success": False, "error": "股票不存在"}), 404
     
-    analysis = analyzer.analyze(stock)
+    analysis = get_analyzer().analyze(stock)
     db.save_analysis(analysis)
     
     return jsonify({
@@ -375,4 +387,4 @@ def export_data():
     })
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    app.run(debug=False, host="0.0.0.0", port=5000)
