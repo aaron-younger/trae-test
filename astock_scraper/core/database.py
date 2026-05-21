@@ -71,7 +71,8 @@ class Database:
                     products TEXT,
                     pe REAL,
                     pb REAL,
-                    update_time TEXT
+                    update_time TEXT,
+                    favorite INTEGER DEFAULT 0
                 )
             """)
             conn.execute("""
@@ -112,6 +113,11 @@ class Database:
                 conn.execute("ALTER TABLE analysis_results ADD COLUMN recommendation_source TEXT")
             except sqlite3.OperationalError:
                 pass
+            
+            try:
+                conn.execute("ALTER TABLE stocks ADD COLUMN favorite INTEGER DEFAULT 0")
+            except sqlite3.OperationalError:
+                pass
     
     def save_stock(self, stock: Stock) -> bool:
         try:
@@ -119,14 +125,15 @@ class Database:
                 conn.execute("""
                     INSERT OR REPLACE INTO stocks 
                     (code, name, market_value, price, industry, sub_industry, 
-                     concepts, products, pe, pb, update_time)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     concepts, products, pe, pb, update_time, favorite)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     stock.code, stock.name, stock.market_value, stock.price,
                     stock.industry, stock.sub_industry, 
                     ",".join(stock.concepts) if stock.concepts else "",
                     ",".join(stock.products) if stock.products else "",
-                    stock.pe, stock.pb, stock.update_time or datetime.now().isoformat()
+                    stock.pe, stock.pb, stock.update_time or datetime.now().isoformat(),
+                    1 if stock.favorite else 0
                 ))
             return True
         except Exception as e:

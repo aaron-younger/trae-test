@@ -1462,6 +1462,14 @@
                     stocks = result.data;
                     filteredStocks = [...stocks];
                     selectedCodes = [];
+                    
+                    // 从后端数据初始化关注列表（优先使用数据库数据）
+                    favorites = stocks.filter(s => s.favorite).map(s => s.code);
+                    console.log('Favorites loaded from server:', favorites);
+                    
+                    // 同步到 localStorage
+                    localStorage.setItem('stockFavorites', JSON.stringify(favorites));
+                    
                     updateStats();
                     renderIndustryFilter();
                     renderHotIndustryList();
@@ -1791,7 +1799,7 @@
             filterAndRender();
         }
 
-        function toggleFavorite(code) {
+        async function toggleFavorite(code) {
             console.log('Toggle favorite for:', code, 'Current favorites:', favorites);
             
             const index = favorites.indexOf(code);
@@ -1801,6 +1809,41 @@
             } else {
                 favorites.push(code);
                 isAdding = true;
+            }
+            
+            // 同步到后端数据库
+            try {
+                const response = await fetch(`${API_BASE}/stocks/${code}/favorite`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ favorite: isAdding })
+                });
+                
+                if (response.ok) {
+                    console.log('Favorite saved to server');
+                } else {
+                    console.error('Failed to save favorite to server');
+                    // 如果服务器失败，恢复本地状态
+                    if (isAdding) {
+                        favorites.pop();
+                    } else {
+                        favorites.push(code);
+                    }
+                    showToast('保存关注失败', 'error');
+                    return;
+                }
+            } catch (error) {
+                console.error('Error saving favorite:', error);
+                // 如果服务器失败，恢复本地状态
+                if (isAdding) {
+                    favorites.pop();
+                } else {
+                    favorites.push(code);
+                }
+                showToast('保存关注失败', 'error');
+                return;
             }
             
             localStorage.setItem('stockFavorites', JSON.stringify(favorites));

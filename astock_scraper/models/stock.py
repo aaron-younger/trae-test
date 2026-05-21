@@ -16,6 +16,7 @@ class Stock:
     pe: Optional[float] = None
     pb: Optional[float] = None
     update_time: Optional[str] = None
+    favorite: bool = False
     
     def __post_init__(self):
         if self.concepts is None:
@@ -37,7 +38,8 @@ class Stock:
             "products": ",".join(self.products) if self.products else "",
             "pe": self.pe,
             "pb": self.pb,
-            "update_time": self.update_time
+            "update_time": self.update_time,
+            "favorite": self.favorite
         }
     
     @classmethod
@@ -48,6 +50,11 @@ class Stock:
             concepts = [c.strip() for c in concepts.split(",") if c.strip()]
         if isinstance(products, str):
             products = [p.strip() for p in products.split(",") if p.strip()]
+        
+        favorite = data.get("favorite", False)
+        # 处理数据库中存储的整数形式 (0/1)
+        if isinstance(favorite, int):
+            favorite = favorite == 1
         
         return cls(
             code=data.get("code", ""),
@@ -60,7 +67,8 @@ class Stock:
             products=products,
             pe=data.get("pe"),
             pb=data.get("pb"),
-            update_time=data.get("update_time")
+            update_time=data.get("update_time"),
+            favorite=favorite
         )
 
 @dataclass

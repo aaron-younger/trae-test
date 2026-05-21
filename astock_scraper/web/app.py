@@ -153,6 +153,20 @@ def update_stock(code):
     
     return jsonify({"success": True, "data": stock.to_dict()})
 
+@app.route("/api/stocks/<code>/favorite", methods=["PUT"])
+def update_favorite(code):
+    data = request.get_json()
+    stock = db.get_stock(code)
+    
+    if not stock:
+        return jsonify({"success": False, "error": "股票不存在"}), 404
+    
+    stock.favorite = data.get("favorite", False)
+    stock.update_time = datetime.now().isoformat()
+    db.save_stock(stock)
+    
+    return jsonify({"success": True, "data": stock.to_dict()})
+
 @app.route("/api/stocks/<code>", methods=["DELETE"])
 def delete_stock(code):
     success = db.delete_stock(code)
