@@ -45,3 +45,16 @@ if longCondition18 and not hasPosition18
 if exitCondition18 and hasPosition18 and tradeDay18 > entryDay18
     strategy.close("Volty_Long", comment="S")
     hasPosition18 := false
+
+// ==================== 买卖标识（箭头+垂线） ====================
+// 买入信号
+plotshape(longCondition18 and not hasPosition18[1], title="B", text="B", style=shape.triangleup, location=location.bottom, color=color.green, size=size.tiny, textcolor=color.green)
+
+// 卖出信号
+plotshape(exitCondition18 and hasPosition18[1] and tradeDay18 > entryDay18[1], title="S", text="S", style=shape.triangledown, location=location.bottom, color=color.red, size=size.tiny, textcolor=color.red)
+
+// 买入垂直线
+plot(longCondition18 and not hasPosition18[1] ? low * 0.998 : na, title="买入垂线", style=plot.style_linebr, color=color.green, linewidth=2)
+
+// 卖出垂直线
+plot(exitCondition18 and hasPosition18[1] and tradeDay18 > entryDay18[1] ? high * 1.002 : na, title="卖出垂线", style=plot.style_linebr, color=color.red, linewidth=2)
