@@ -21,8 +21,6 @@ useStopLoss = input.bool(false, "启用止损")
 stopLossPct = input.float(5.0, "止损百分比", step=0.1)
 useTakeProfit = input.bool(false, "启用止盈")
 takeProfitPct = input.float(10.0, "止盈百分比", step=0.1)
-useCommission = input.bool(false, "启用手续费")
-commissionPct = input.float(0.03, "手续费百分比", step=0.01)
 
 // 波动率计算
 trueRange = math.max(high - low, math.max(math.abs(high - close[1]), math.abs(low - close[1])))
@@ -44,10 +42,6 @@ exitCondition = isExpanding and isCloseLow
 var bool hasPosition = false
 var int entryDay = na
 var float entryPrice = na
-
-// 设置手续费
-if useCommission
-    strategy.commission(strategy.commission.percent, commissionPct)
 
 // 开仓逻辑
 if longCondition and not hasPosition
