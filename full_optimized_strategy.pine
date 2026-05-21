@@ -1,106 +1,47 @@
 //@version=5
-strategy("波动扩张收盘策略(T+1)完整版", 
+strategy("波动扩张收盘策略(T+1)", 
      overlay=false,
      pyramiding=0,
      default_qty_value=5000,
      initial_capital=500000,
      close_entries_rule="FIFO")
 
-// ==================== 交易日计数 ====================
-isNewDay = ta.change(time("D"))
-var int tradeDay = 0
-if isNewDay
-    tradeDay += 1
+// 交易日计数
+isNewDay18 = ta.change(time("D"))
+var int tradeDay18 = 0
+if isNewDay18
+    tradeDay18 += 1
 
-// ==================== 参数设置 ====================
-// 核心参数（保持原样）
+// 参数
 volatilityPeriod = input.int(20, "波动率周期")
 expansionFactor = input.float(2.0, "扩张系数", step=0.1)
 
-// 优化参数（默认全部关闭）
-useTrendFilter = input.bool(false, "启用均线趋势过滤")
-trendLength = input.int(20, "趋势均线周期")
-
-useStopLoss = input.bool(false, "启用ATR动态止损")
-stopLossAtrMultiplier = input.float(1.5, "止损ATR倍数", step=0.1)
-
-useTakeProfit = input.bool(false, "启用固定止盈")
-takeProfitPct = input.float(3.0, "止盈百分比", step=0.1)
-
-maxHoldDays = input.int(999, "最大持仓天数")
-
-volMultiplier = input.float(1.0, "成交量倍数", step=0.1)
-
-useFlexibleExit = input.bool(false, "启用灵活卖出（弱势收盘即卖）")
-
-// ==================== 基础计算 ====================
 // 波动率计算
 trueRange = math.max(high - low, math.max(math.abs(high - close[1]), math.abs(low - close[1])))
-atrValue = ta.sma(trueRange, volatilityPeriod)
+atrValue18 = ta.sma(trueRange, volatilityPeriod)
 
 // 波动扩张判断
-isExpanding = trueRange > atrValue * expansionFactor
+isExpanding = trueRange > atrValue18 * expansionFactor
 
 // 收盘位置判断
 closePosition = (close - low) / (high - low)
 isCloseHigh = closePosition > 0.7
 isCloseLow = closePosition < 0.3
 
-// 均线趋势
-maTrend = ta.sma(close, trendLength)
-isUptrend = close > maTrend
+// 交易信号
+longCondition18 = isExpanding and isCloseHigh and volume > ta.sma(volume, 20)
+exitCondition18 = isExpanding and isCloseLow
 
-// 成交量过滤
-volSMA = ta.sma(volume, 20)
-volumeEnough = volume > volSMA * volMultiplier
+// 持仓跟踪
+var bool hasPosition18 = false
+var int entryDay18 = na
 
-// ==================== 开仓条件 ====================
-longCondition = isExpanding and isCloseHigh and volumeEnough
-
-// 趋势过滤
-if useTrendFilter
-    longCondition := longCondition and isUptrend
-
-// ==================== 持仓跟踪 ====================
-var bool hasPosition = false
-var int entryDay = na
-var float entryPrice = na
-
-// 开仓
-if longCondition and not hasPosition
+// 交易执行
+if longCondition18 and not hasPosition18
     strategy.entry("Volty_Long", strategy.long, comment="B")
-    hasPosition := true
-    entryDay := tradeDay
-    entryPrice := close
+    hasPosition18 := true
+    entryDay18 := tradeDay18
 
-// ==================== 平仓条件 ====================
-var bool exitTriggered = false
-exitTriggered := false
-
-if hasPosition
-    // 确保T+1：必须至少持仓1天
-    canSell = tradeDay > entryDay
-    
-    if canSell
-        // 1. 原策略平仓条件
-        originalExit = isExpanding and isCloseLow
-        
-        // 2. 灵活卖出条件（即使没有波动扩张，弱势收盘也卖）
-        flexibleExit = useFlexibleExit and isCloseLow
-        
-        // 3. ATR止损
-        atrStopLossExit = useStopLoss and (low <= entryPrice - atrValue * stopLossAtrMultiplier)
-        
-        // 4. 固定止盈
-        takeProfitExit = useTakeProfit and (high >= entryPrice * (1 + takeProfitPct / 100))
-        
-        // 5. 无条件清仓（超过最大持仓天数）
-        timeExit = tradeDay > entryDay + maxHoldDays - 1
-        
-        // 综合判断
-        exitTriggered := originalExit or flexibleExit or atrStopLossExit or takeProfitExit or timeExit
-
-// 执行平仓
-if exitTriggered
+if exitCondition18 and hasPosition18 and tradeDay18 > entryDay18
     strategy.close("Volty_Long", comment="S")
-    hasPosition := false
+    hasPosition18 := false
