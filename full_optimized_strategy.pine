@@ -13,28 +13,25 @@ if isNewDay
     tradeDay += 1
 
 // ==================== 参数设置 ====================
-// 核心参数
+// 核心参数（保持原样）
 volatilityPeriod = input.int(20, "波动率周期")
 expansionFactor = input.float(2.0, "扩张系数", step=0.1)
 
-// 趋势过滤参数
-useTrendFilter = input.bool(true, "启用均线趋势过滤")
+// 优化参数（默认全部关闭）
+useTrendFilter = input.bool(false, "启用均线趋势过滤")
 trendLength = input.int(20, "趋势均线周期")
 
-// 止损止盈参数
-useStopLoss = input.bool(true, "启用ATR动态止损")
+useStopLoss = input.bool(false, "启用ATR动态止损")
 stopLossAtrMultiplier = input.float(1.5, "止损ATR倍数", step=0.1)
-useTakeProfit = input.bool(true, "启用固定止盈")
+
+useTakeProfit = input.bool(false, "启用固定止盈")
 takeProfitPct = input.float(3.0, "止盈百分比", step=0.1)
 
-// 持仓时间参数
-maxHoldDays = input.int(2, "最大持仓天数")
+maxHoldDays = input.int(999, "最大持仓天数")
 
-// 成交量过滤参数
-volMultiplier = input.float(1.5, "成交量倍数", step=0.1)
+volMultiplier = input.float(1.0, "成交量倍数", step=0.1)
 
-// 卖出条件优化
-useFlexibleExit = input.bool(true, "启用灵活卖出（弱势收盘即卖）")
+useFlexibleExit = input.bool(false, "启用灵活卖出（弱势收盘即卖）")
 
 // ==================== 基础计算 ====================
 // 波动率计算
@@ -58,10 +55,7 @@ volSMA = ta.sma(volume, 20)
 volumeEnough = volume > volSMA * volMultiplier
 
 // ==================== 开仓条件 ====================
-longCondition = true
-
-// 原策略核心条件
-longCondition := longCondition and isExpanding and isCloseHigh and volumeEnough
+longCondition = isExpanding and isCloseHigh and volumeEnough
 
 // 趋势过滤
 if useTrendFilter
@@ -84,23 +78,27 @@ var bool exitTriggered = false
 exitTriggered := false
 
 if hasPosition
-    // 1. 原策略平仓条件
-    originalExit = isExpanding and isCloseLow and tradeDay > entryDay
+    // 确保T+1：必须至少持仓1天
+    canSell = tradeDay > entryDay
     
-    // 2. 灵活卖出条件（即使没有波动扩张，弱势收盘也卖）
-    flexibleExit = useFlexibleExit and isCloseLow and tradeDay > entryDay
-    
-    // 3. ATR止损
-    atrStopLossExit = useStopLoss and (low <= entryPrice - atrValue * stopLossAtrMultiplier)
-    
-    // 4. 固定止盈
-    takeProfitExit = useTakeProfit and (high >= entryPrice * (1 + takeProfitPct / 100))
-    
-    // 5. 无条件清仓（超过最大持仓天数）
-    timeExit = tradeDay > entryDay + maxHoldDays - 1
-    
-    // 综合判断
-    exitTriggered := originalExit or flexibleExit or atrStopLossExit or takeProfitExit or timeExit
+    if canSell
+        // 1. 原策略平仓条件
+        originalExit = isExpanding and isCloseLow
+        
+        // 2. 灵活卖出条件（即使没有波动扩张，弱势收盘也卖）
+        flexibleExit = useFlexibleExit and isCloseLow
+        
+        // 3. ATR止损
+        atrStopLossExit = useStopLoss and (low <= entryPrice - atrValue * stopLossAtrMultiplier)
+        
+        // 4. 固定止盈
+        takeProfitExit = useTakeProfit and (high >= entryPrice * (1 + takeProfitPct / 100))
+        
+        // 5. 无条件清仓（超过最大持仓天数）
+        timeExit = tradeDay > entryDay + maxHoldDays - 1
+        
+        // 综合判断
+        exitTriggered := originalExit or flexibleExit or atrStopLossExit or takeProfitExit or timeExit
 
 // 执行平仓
 if exitTriggered
