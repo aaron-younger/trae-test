@@ -1,6 +1,6 @@
 //@version=5
 strategy("波动扩张收盘策略(T+1)", 
-     overlay=false,
+     overlay=true,
      pyramiding=0,
      default_qty_value=5000,
      initial_capital=500000,
@@ -45,3 +45,7 @@ if longCondition18 and not hasPosition18
 if exitCondition18 and hasPosition18 and tradeDay18 > entryDay18
     strategy.close("Volty_Long", comment="S")
     hasPosition18 := false
+
+// K线背景着色标记买卖点
+bgcolor(longCondition18 and not hasPosition18[1] ? color.new(color.green, 80) : na, title="买入K线")
+bgcolor(exitCondition18 and hasPosition18[1] and tradeDay18 > entryDay18[1] ? color.new(color.red, 80) : na, title="卖出K线")
