@@ -198,7 +198,8 @@ def scrape_stocks():
     keyword = data.get("keyword")
     
     if not codes and not keyword:
-        codes = ["000001", "000002", "600519", "000858", "601318"]
+        all_stocks = db.get_all_stocks()
+        codes = [s.code for s in all_stocks]
     elif keyword:
         scraper = get_scraper_factory().get_scraper("tencent")
         search_results = scraper.search_stocks(keyword)
