@@ -96,20 +96,10 @@ if hasPosition
     flexibleExit = useFlexibleExit and isCloseLow and tradeDay > entryDay
     
     // 3. ATR止损
-    atrStopLoss = na
-    if useStopLoss
-        atrStopLoss = entryPrice - atrValue * stopLossAtrMultiplier
-        atrStopLossExit = low <= atrStopLoss
-    else
-        atrStopLossExit = false
+    atrStopLossExit = useStopLoss and (low <= entryPrice - atrValue * stopLossAtrMultiplier)
     
     // 4. 固定止盈
-    takeProfitPrice = na
-    if useTakeProfit
-        takeProfitPrice = entryPrice * (1 + takeProfitPct / 100)
-        takeProfitExit = high >= takeProfitPrice
-    else
-        takeProfitExit = false
+    takeProfitExit = useTakeProfit and (high >= entryPrice * (1 + takeProfitPct / 100))
     
     // 5. 无条件清仓（超过最大持仓天数）
     timeExit = tradeDay > entryDay + maxHoldDays - 1
