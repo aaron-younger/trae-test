@@ -4,12 +4,7 @@ strategy("波动扩张收盘策略(T+1)完整版",
      pyramiding=0,
      default_qty_value=5000,
      initial_capital=500000,
-     close_entries_rule="FIFO",
-     commission_type=strategy.commission.percent,
-     commission_value=0.03,
-     slippage=0.1,
-     margin_long=100,
-     margin_short=100)
+     close_entries_rule="FIFO")
 
 // ==================== 交易日计数 ====================
 isNewDay = ta.change(time("D"))
