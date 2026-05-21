@@ -1,6 +1,6 @@
 //@version=5
 strategy("波动扩张收盘策略(T+1)", 
-     overlay=true,
+     overlay=false,
      pyramiding=0,
      default_qty_value=5000,
      initial_capital=500000,
@@ -45,9 +45,3 @@ if longCondition18 and not hasPosition18
 if exitCondition18 and hasPosition18 and tradeDay18 > entryDay18
     strategy.close("Volty_Long", comment="S")
     hasPosition18 := false
-
-// 绘制买入信号标记
-plot(longCondition18 and not hasPosition18 ? low : na, title="买入标记", style=plot.style_circles, color=color.green, linewidth=5)
-
-// 绘制卖出信号标记
-plot(exitCondition18 and hasPosition18 and tradeDay18 > entryDay18 ? high : na, title="卖出标记", style=plot.style_circles, color=color.red, linewidth=5)
