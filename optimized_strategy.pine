@@ -1,12 +1,10 @@
 //@version=5
-strategy("优化波动扩张收盘策略(T+1)", 
+strategy("波动扩张收盘策略(T+1)优化版", 
      overlay=false,
      pyramiding=0,
      default_qty_value=5000,
      initial_capital=500000,
-     close_entries_rule="FIFO",
-     commission_type=strategy.commission.percent,
-     commission_value=0.03)
+     close_entries_rule="FIFO")
 
 isNewDay = ta.change(time("D"))
 var int tradeDay = 0
@@ -15,33 +13,27 @@ if isNewDay
 
 volatilityPeriod = input.int(20, "波动率周期")
 expansionFactor = input.float(2.0, "扩张系数", step=0.1)
-stopLossMultiplier = input.float(2.0, "止损倍数", step=0.1)
-takeProfitMultiplier = input.float(3.0, "止盈倍数", step=0.1)
 
-atrValue = ta.atr(volatilityPeriod)
-isExpanding = ta.tr > atrValue * expansionFactor
+trueRange = math.max(high - low, math.max(math.abs(high - close[1]), math.abs(low - close[1])))
+atrValue = ta.sma(trueRange, volatilityPeriod)
+
+isExpanding = trueRange > atrValue * expansionFactor
 
 closePosition = (close - low) / (high - low)
 isCloseHigh = closePosition > 0.7
 isCloseLow = closePosition < 0.3
 
-volSMA = ta.sma(volume, 20)
-longCondition = isExpanding and isCloseHigh and volume > volSMA
+longCondition = isExpanding and isCloseHigh and volume > ta.sma(volume, 20)
+exitCondition = isExpanding and isCloseLow
 
 var bool hasPosition = false
 var int entryDay = na
-var float entryPrice = na
 
 if longCondition and not hasPosition
     strategy.entry("Volty_Long", strategy.long, comment="B")
     hasPosition := true
     entryDay := tradeDay
-    entryPrice := close
 
-if hasPosition
-    stopLoss = entryPrice - atrValue * stopLossMultiplier
-    takeProfit = entryPrice + atrValue * takeProfitMultiplier
-    
-    if (isExpanding and isCloseLow and tradeDay > entryDay) or low <= stopLoss or high >= takeProfit
-        strategy.close("Volty_Long", comment="S")
-        hasPosition := false
+if exitCondition and hasPosition and tradeDay > entryDay
+    strategy.close("Volty_Long", comment="S")
+    hasPosition := false

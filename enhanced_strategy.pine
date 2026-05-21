@@ -1,0 +1,78 @@
+//@version=5
+strategy("波动扩张收盘策略(T+1)增强版", 
+     overlay=false,
+     pyramiding=0,
+     default_qty_value=5000,
+     initial_capital=500000,
+     close_entries_rule="FIFO")
+
+// 交易日计数
+isNewDay = ta.change(time("D"))
+var int tradeDay = 0
+if isNewDay
+    tradeDay += 1
+
+// 核心参数
+volatilityPeriod = input.int(20, "波动率周期")
+expansionFactor = input.float(2.0, "扩张系数", step=0.1)
+
+// 可选优化参数（默认关闭）
+useStopLoss = input.bool(false, "启用止损")
+stopLossPct = input.float(5.0, "止损百分比", step=0.1)
+useTakeProfit = input.bool(false, "启用止盈")
+takeProfitPct = input.float(10.0, "止盈百分比", step=0.1)
+useCommission = input.bool(false, "启用手续费")
+commissionPct = input.float(0.03, "手续费百分比", step=0.01)
+
+// 波动率计算
+trueRange = math.max(high - low, math.max(math.abs(high - close[1]), math.abs(low - close[1])))
+atrValue = ta.sma(trueRange, volatilityPeriod)
+
+// 波动扩张判断
+isExpanding = trueRange > atrValue * expansionFactor
+
+// 收盘位置判断
+closePosition = (close - low) / (high - low)
+isCloseHigh = closePosition > 0.7
+isCloseLow = closePosition < 0.3
+
+// 交易信号
+longCondition = isExpanding and isCloseHigh and volume > ta.sma(volume, 20)
+exitCondition = isExpanding and isCloseLow
+
+// 持仓跟踪
+var bool hasPosition = false
+var int entryDay = na
+var float entryPrice = na
+
+// 设置手续费
+if useCommission
+    strategy.commission(strategy.commission.percent, commissionPct)
+
+// 开仓逻辑
+if longCondition and not hasPosition
+    strategy.entry("Volty_Long", strategy.long, comment="B")
+    hasPosition := true
+    entryDay := tradeDay
+    entryPrice := close
+
+// 平仓逻辑
+var bool exitTriggered = false
+exitTriggered := false
+
+// 原策略平仓条件
+if exitCondition and hasPosition and tradeDay > entryDay
+    exitTriggered := true
+
+// 可选止损条件
+if useStopLoss and hasPosition and close < entryPrice * (1 - stopLossPct / 100)
+    exitTriggered := true
+
+// 可选止盈条件
+if useTakeProfit and hasPosition and close > entryPrice * (1 + takeProfitPct / 100)
+    exitTriggered := true
+
+// 执行平仓
+if exitTriggered
+    strategy.close("Volty_Long", comment="S")
+    hasPosition := false
