@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A股个股数据可视化</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        header { 
+            text-align: center; 
+            color: white; 
+            padding: 30px 0;
+        }
+        h1 { font-size: 2.5rem; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
+        .subtitle { opacity: 0.9; }
+        .controls { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 12px; 
+            margin-bottom: 20px;
+            display: flex; gap: 20px; align-items: center; flex-wrap: wrap;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+        }
+        select, button { 
+            padding: 10px 15px; 
+            border: 1px solid #e5e7eb; 
+            border-radius: 6px; 
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        button { 
+            background: #3b82f6; 
+            color: white; 
+            border: none; 
+            transition: all 0.3s ease;
+        }
+        button:hover { background: #2563eb; transform: translateY(-2px); }
+        .stats { 
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 15px; 
+            margin-bottom: 20px;
+        }
+        .stat-card { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 12px; 
+            text-align: center;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+        }
+        .stat-label { color: #6b7280; font-size: 0.9rem; margin-bottom: 8px; }
+        .stat-value { font-size: 1.5rem; font-weight: 700; }
+        .positive { color: #10b981; }
+        .negative { color: #ef4444; }
+        .charts { 
+            display: grid; 
+            gap: 20px;
+        }
+        .chart-card { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+        }
+        .chart-card h3 { margin-bottom: 15px; color: #1f2937; }
+        .chart { width: 100%; height: 350px; }
+        .two-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .info-box {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            border-left: 4px solid #3b82f6;
+        }
+        .info-box h3 { color: #1f2937; margin-bottom: 10px; }
+        .info-box p { color: #6b7280; line-height: 1.6; }
+        @media (max-width: 768px) {
+            .stats { grid-template-columns: repeat(2, 1fr); }
+            .two-cols { grid-template-columns: 1fr; }
+            h1 { font-size: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📈 A股个股数据可视化</h1>
+            <p class="subtitle">专业的股票数据分析工具</p>
+        </header>
+        
+        <div class="info-box">
+            <h3>ℹ️ 说明</h3>
+            <p>本页面使用模拟数据演示。如需获取真实A股数据，请运行 <code>main.py</code>（命令行工具）或 <code>app.py</code>（Web应用）。</p>
+        </div>
+        
+        <div class="controls">
+            <label>选择股票:</label>
+            <select id="stockSelect">
+                <option value="600519.SH">600519.SH 贵州茅台</option>
+                <option value="000001.SZ">000001.SZ 平安银行</option>
+                <option value="000858.SZ">000858.SZ 五粮液</option>
+                <option value="002594.SZ">002594.SZ 比亚迪</option>
+            </select>
+            <label>时间周期:</label>
+            <select id="periodSelect">
+                <option value="30">30天</option>
+                <option value="90">90天</option>
+                <option value="180">180天</option>
+                <option value="365" selected>1年</option>
+            </select>
+            <button onclick="regenerateData()">重新生成数据</button>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-label">总收益率</div>
+                <div class="stat-value" id="totalReturn">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">日均收益率</div>
+                <div class="stat-value" id="avgReturn">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">波动率</div>
+                <div class="stat-value" id="volatility">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">夏普比率</div>
+                <div class="stat-value" id="sharpe">-</div>
+            </div>
+        </div>
+        
+        <div class="charts">
+            <div class="chart-card">
+                <h3>📊 价格走势与均线</h3>
+                <div id="priceChart" class="chart"></div>
+            </div>
+            
+            <div class="two-cols">
+                <div class="chart-card">
+                    <h3>📉 RSI指标</h3>
+                    <div id="rsiChart" class="chart"></div>
+                </div>
+                <div class="chart-card">
+                    <h3>📊 MACD指标</h3>
+                    <div id="macdChart" class="chart"></div>
+                </div>
+            </div>
+            
+            <div class="chart-card">
+                <h3>📈 布林带</h3>
+                <div id="bollingerChart" class="chart"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let priceChart, rsiChart, macdChart, bollingerChart;
+        let currentData;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            initCharts();
+            regenerateData();
+        });
+        
+        function initCharts() {
+            priceChart = echarts.init(document.getElementById('priceChart'));
+            rsiChart = echarts.init(document.getElementById('rsiChart'));
+            macdChart = echarts.init(document.getElementById('macdChart'));
+            bollingerChart = echarts.init(document.getElementById('bollingerChart'));
+            
+            window.addEventListener('resize', function() {
+                priceChart.resize();
+                rsiChart.resize();
+                macdChart.resize();
+                bollingerChart.resize();
+            });
+        }
+        
+        function regenerateData() {
+            currentData = generateMockData();
+            renderData(currentData);
+        }
+        
+        function generateMockData() {
+            const days = 100;
+            const basePrice = 1000.0;
+            const data = [];
+            let currentPrice = basePrice;
+            
+            for (let i = 0; i < days; i++) {
+                const date = new Date();
+                date.setDate(date.getDate() - (days - i));
+                const dateStr = date.toISOString().split('T')[0];
+                
+                const change = randomNormal(0.001, 0.02);
+                currentPrice = currentPrice * (1 + change);
+                
+                data.push({
+                    date: dateStr,
+                    open: currentPrice * (1 + randomNormal(0, 0.01)),
+                    high: currentPrice * (1 + randomNormal(0, 0.02)),
+                    low: currentPrice * (1 - randomNormal(0, 0.02)),
+                    close: currentPrice
+                });
+            }
+            
+            // 计算技术指标
+            const df = data.map((d, i) => {
+                const windowData = data.slice(Math.max(0, i - 20), i + 1);
+                const closes = windowData.map(w => w.close);
+                
+                d.ma5 = i >= 4 ? average(closes.slice(-5)) : null;
+                d.ma10 = i >= 9 ? average(closes.slice(-10)) : null;
+                d.ma20 = i >= 19 ? average(closes) : null;
+                
+                // 布林带
+                if (i >= 19) {
+                    d.bb_middle = d.ma20;
+                    d.bb_std = stdDev(closes);
+                    d.bb_upper = d.bb_middle + (d.bb_std * 2);
+                    d.bb_lower = d.bb_middle - (d.bb_std * 2);
+                }
+                
+                return d;
+            });
+            
+            // RSI
+            for (let i = 1; i < df.length; i++) {
+                const delta = df[i].close - df[i-1].close;
+                df[i].delta = delta;
+            }
+            
+            for (let i = 14; i < df.length; i++) {
+                const gains = df.slice(i-13, i+1).filter(d => d.delta > 0).map(d => d.delta);
+                const losses = df.slice(i-13, i+1).filter(d => d.delta < 0).map(d => -d.delta);
+                const avgGain = gains.length > 0 ? average(gains) : 0;
+                const avgLoss = losses.length > 0 ? average(losses) : 0;
+                const rs = avgLoss !== 0 ? avgGain / avgLoss : 100;
+                df[i].rsi = 100 - (100 / (1 + rs));
+            }
+            
+            // MACD
+            let emaFast = df[0].close;
+            let emaSlow = df[0].close;
+            let signal = 0;
+            
+            for (let i = 0; i < df.length; i++) {
+                emaFast = (df[i].close - emaFast) * (2 / 13) + emaFast;
+                emaSlow = (df[i].close - emaSlow) * (2 / 27) + emaSlow;
+                df[i].ema_fast = emaFast;
+                df[i].ema_slow = emaSlow;
+                df[i].macd = emaFast - emaSlow;
+                signal = (df[i].macd - signal) * (2 / 10) + signal;
+                df[i].signal = signal;
+                df[i].histogram = df[i].macd - signal;
+            }
+            
+            // 统计数据
+            const returns = [];
+            for (let i = 1; i < df.length; i++) {
+                returns.push((df[i].close - df[i-1].close) / df[i-1].close);
+            }
+            
+            const totalReturn = (df[df.length-1].close / df[0].close - 1) * 100;
+            const avgReturn = average(returns) * 100;
+            const stdDev = stdDev(returns) * 100;
+            const sharpe = stdDev !== 0 ? (avgReturn / stdDev) * Math.sqrt(252) : 0;
+            
+            return {
+                data: df,
+                stats: {
+                    total_return: totalReturn,
+                    avg_daily_return: avgReturn,
+                    std_dev: stdDev,
+                    sharpe_ratio: sharpe,
+                    days: days
+                }
+            };
+        }
+        
+        function randomNormal(mean, stdDev) {
+            let u = 0, v = 0;
+            while (u === 0) u = Math.random();
+            while (v === 0) v = Math.random();
+            return mean + stdDev * Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+        }
+        
+        function average(arr) {
+            return arr.reduce((a, b) => a + b, 0) / arr.length;
+        }
+        
+        function stdDev(arr) {
+            const avg = average(arr);
+            const squareDiffs = arr.map(v => Math.pow(v - avg, 2));
+            const avgSquareDiff = average(squareDiffs);
+            return Math.sqrt(avgSquareDiff);
+        }
+        
+        function renderData(data) {
+            const stats = data.stats;
+            const records = data.data;
+            const dates = records.map(r => r.date);
+            
+            document.getElementById('totalReturn').textContent = stats.total_return.toFixed(2) + '%';
+            document.getElementById('totalReturn').className = 'stat-value ' + (stats.total_return >= 0 ? 'positive' : 'negative');
+            document.getElementById('avgReturn').textContent = stats.avg_daily_return.toFixed(3) + '%';
+            document.getElementById('avgReturn').className = 'stat-value ' + (stats.avg_daily_return >= 0 ? 'positive' : 'negative');
+            document.getElementById('volatility').textContent = stats.std_dev.toFixed(2) + '%';
+            document.getElementById('sharpe').textContent = stats.sharpe_ratio.toFixed(2);
+            
+            renderPriceChart(dates, records);
+            renderRSIChart(dates, records);
+            renderMACDChart(dates, records);
+            renderBollingerChart(dates, records);
+        }
+        
+        function renderPriceChart(dates, records) {
+            priceChart.setOption({
+                tooltip: { trigger: 'axis' },
+                legend: { data: ['收盘价', 'MA5', 'MA10', 'MA20'] },
+                grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+                xAxis: { type: 'category', data: dates, boundaryGap: false },
+                yAxis: { type: 'value' },
+                series: [
+                    { name: '收盘价', type: 'line', data: records.map(r => r.close), smooth: true, lineStyle: { width: 2, color: '#3b82f6' } },
+                    { name: 'MA5', type: 'line', data: records.map(r => r.ma5), smooth: true, lineStyle: { width: 1.5, color: '#10b981' }, showSymbol: false },
+                    { name: 'MA10', type: 'line', data: records.map(r => r.ma10), smooth: true, lineStyle: { width: 1.5, color: '#f59e0b' }, showSymbol: false },
+                    { name: 'MA20', type: 'line', data: records.map(r => r.ma20), smooth: true, lineStyle: { width: 1.5, color: '#ef4444' }, showSymbol: false }
+                ]
+            });
+        }
+        
+        function renderRSIChart(dates, records) {
+            rsiChart.setOption({
+                tooltip: { trigger: 'axis' },
+                grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+                xAxis: { type: 'category', data: dates, boundaryGap: false },
+                yAxis: { type: 'value', min: 0, max: 100 },
+                series: [{
+                    name: 'RSI', type: 'line', data: records.map(r => r.rsi), smooth: true, lineStyle: { width: 2 },
+                    markLine: { data: [
+                        { yAxis: 70, lineStyle: { color: '#ef4444', type: 'dashed' } },
+                        { yAxis: 30, lineStyle: { color: '#10b981', type: 'dashed' } }
+                    ]}
+                }]
+            });
+        }
+        
+        function renderMACDChart(dates, records) {
+            macdChart.setOption({
+                tooltip: { trigger: 'axis' },
+                legend: { data: ['MACD', 'Signal', 'Histogram'] },
+                grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+                xAxis: { type: 'category', data: dates, boundaryGap: false },
+                yAxis: { type: 'value' },
+                series: [
+                    { name: 'MACD', type: 'line', data: records.map(r => r.macd), smooth: true, lineStyle: { width: 2, color: '#3b82f6' } },
+                    { name: 'Signal', type: 'line', data: records.map(r => r.signal), smooth: true, lineStyle: { width: 2, color: '#f59e0b' } },
+                    { name: 'Histogram', type: 'bar', data: records.map(r => r.histogram), itemStyle: { color: function(p) { return p.value >= 0 ? '#10b981' : '#ef4444'; } } }
+                ]
+            });
+        }
+        
+        function renderBollingerChart(dates, records) {
+            bollingerChart.setOption({
+                tooltip: { trigger: 'axis' },
+                legend: { data: ['收盘价', '上轨', '中轨', '下轨'] },
+                grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+                xAxis: { type: 'category', data: dates, boundaryGap: false },
+                yAxis: { type: 'value' },
+                series: [
+                    { name: '收盘价', type: 'line', data: records.map(r => r.close), smooth: true, lineStyle: { width: 2, color: '#3b82f6' } },
+                    { name: '上轨', type: 'line', data: records.map(r => r.bb_upper), smooth: true, lineStyle: { width: 1, color: '#ef4444', type: 'dashed' }, showSymbol: false },
+                    { name: '中轨', type: 'line', data: records.map(r => r.bb_middle), smooth: true, lineStyle: { width: 1, color: '#f59e0b', type: 'dashed' }, showSymbol: false },
+                    { name: '下轨', type: 'line', data: records.map(r => r.bb_lower), smooth: true, lineStyle: { width: 1, color: '#10b981', type: 'dashed' }, showSymbol: false }
+                ]
+            });
+        }
+    </script>
+</body>
+</html>
