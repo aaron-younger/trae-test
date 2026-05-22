@@ -37,23 +37,24 @@
 
             <main class="content">
                 <div class="control-panel">
-                    <div class="control-group">
-                        <label>选择股票:</label>
-                        <select id="stockSelect" onchange="loadStockData()">
-                            <option value="600519.SH">600519.SH 贵州茅台</option>
-                        </select>
-                    </div>
-                    <div class="control-group">
-                        <label>时间周期:</label>
-                        <select id="periodSelect" onchange="loadStockData()">
-                            <option value="30">30天</option>
-                            <option value="90">90天</option>
-                            <option value="180">180天</option>
-                            <option value="365" selected>1年</option>
-                        </select>
-                    </div>
-                    <button class="btn btn-primary" onclick="loadStockData()">刷新数据</button>
-                </div>
+            <div class="control-group">
+                <label>选择股票:</label>
+                <select id="stockSelect" onchange="loadStockData()">
+                    <option value="600519.SH">600519.SH 贵州茅台</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>时间周期:</label>
+                <select id="periodSelect" onchange="loadStockData()">
+                    <option value="30">30天</option>
+                    <option value="90">90天</option>
+                    <option value="180">180天</option>
+                    <option value="365" selected>1年</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" onclick="loadStockData()">刷新数据</button>
+            <button class="btn" id="downloadBtn" onclick="downloadData()" disabled style="background-color: var(--secondary); color: white;">下载数据</button>
+        </div>
 
                 <div class="stats-cards" id="statsCards">
                     <div class="card">
@@ -96,6 +97,13 @@
                     <div class="chart-wrapper">
                         <h3>📈 布林带</h3>
                         <div id="bollingerChart" class="chart"></div>
+                    </div>
+                </div>
+                
+                <div class="chart-container">
+                    <div class="chart-wrapper">
+                        <h3>📊 成交量</h3>
+                        <div id="volumeChart" class="chart"></div>
                     </div>
                 </div>
             </main>

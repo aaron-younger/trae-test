@@ -1,6 +1,6 @@
 # A股个股数据自动化采集与分析工具
 
-一个用于采集和分析A股股票数据的Python工具，支持多种数据源和技术指标计算。
+一个用于采集和分析A股股票数据的Python工具，支持多种数据源和技术指标计算，提供Web界面进行直观的数据可视化。
 
 ## 功能特点
 
@@ -12,19 +12,40 @@
   - MACD 指标
   - 布林带
   - 日收益率和累计收益率
-- **数据可视化**: 支持蜡烛图、价格均线图、RSI图
+- **数据可视化**: 
+  - 支持Web界面实时展示技术分析图表
+  - 命令行模式下支持蜡烛图、价格均线图、RSI图
 - **关注列表管理**: 管理常用股票列表
 - **数据导出**: 支持导出为CSV文件
+- **双模式操作**: 支持命令行模式和Web界面模式
 
 ## 安装依赖
 
 ```bash
-pip install pandas numpy tushare akshare matplotlib mplfinance
+pip install pandas numpy tushare akshare matplotlib mplfinance flask flask-cors
 ```
 
 ## 使用方法
 
-### 基本用法
+### Web界面方式（推荐）
+
+启动Web服务：
+
+```bash
+python app.py
+```
+
+然后在浏览器中打开：http://127.0.0.1:5000
+
+在Web界面中可以：
+- 直观地查看股票价格走势和技术指标图表
+- 管理关注的股票列表
+- 选择不同的时间周期进行分析
+- 查看详细的统计指标（收益率、波动率、夏普比率等）
+
+### 命令行模式
+
+#### 基本用法
 
 ```bash
 # 获取单只股票数据
@@ -95,8 +116,15 @@ python main.py -l
 ## 项目结构
 
 ```
-├── main.py          # 主程序入口
+├── app.py           # Web应用主程序（Flask后端）
+├── main.py          # 命令行工具主程序
 ├── config.json      # 配置文件
+├── requirements.txt # Python依赖列表
+├── templates/       # HTML模板目录
+│   └── index.html   # 主页面模板
+├── static/          # 静态文件目录
+│   ├── style.css    # 样式表
+│   └── app.js       # 前端JavaScript
 ├── data/            # 数据存储目录
 │   └── *.csv        # 导出的CSV数据文件
 └── README.md        # 项目说明文档

@@ -1,6 +1,6 @@
 // A股个股数据可视化 - 前端脚本
 let currentData = null;
-let priceChart, rsiChart, macdChart, bollingerChart;
+let priceChart, rsiChart, macdChart, bollingerChart, volumeChart;
 const stockNames = {
     "600519.SH": "贵州茅台",
     "000001.SZ": "平安银行",
@@ -21,17 +21,57 @@ document.addEventListener('DOMContentLoaded', function() {
     loadStockData();
 });
 
+// 下载CSV数据功能
+function downloadData() {
+    if (!currentData) {
+        alert('请先加载数据');
+        return;
+    }
+    
+    const { data, symbol } = currentData;
+    if (!data || data.length === 0) {
+        alert('没有数据可下载');
+        return;
+    }
+    
+    // 构建CSV内容
+    const headers = Object.keys(data[0]);
+    const csvContent = [
+        headers.join(','),
+        ...data.map(row => 
+            headers.map(header => {
+                const value = row[header];
+                return value === null || value === undefined ? '' : JSON.stringify(value);
+            }).join(',')
+        )
+    ].join('\n');
+    
+    // 创建下载链接
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    const dateStr = new Date().toISOString().split('T')[0];
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${symbol}_${dateStr}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
 function initCharts() {
     priceChart = echarts.init(document.getElementById('priceChart'));
     rsiChart = echarts.init(document.getElementById('rsiChart'));
     macdChart = echarts.init(document.getElementById('macdChart'));
     bollingerChart = echarts.init(document.getElementById('bollingerChart'));
+    volumeChart = echarts.init(document.getElementById('volumeChart'));
     
     window.addEventListener('resize', function() {
         priceChart.resize();
         rsiChart.resize();
         macdChart.resize();
         bollingerChart.resize();
+        volumeChart.resize();
     });
 }
 
@@ -137,20 +177,30 @@ async function removeFromWatchlist(symbol) {
 async function loadStockData() {
     const symbol = document.getElementById('stockSelect').value;
     const days = document.getElementById('periodSelect').value;
+    const downloadBtn = document.getElementById('downloadBtn');
     
     try {
+        // 显示加载状态
+        downloadBtn.disabled = true;
+        downloadBtn.textContent = '加载中...';
+        
         const response = await fetch(`/api/stock/daily?symbol=${symbol}&days=${days}`);
         const data = await response.json();
         if (data.success) {
             currentData = data;
             updateStats(data.stats);
             renderCharts(data);
+            // 启用下载按钮
+            downloadBtn.disabled = false;
+            downloadBtn.textContent = '下载数据';
         } else {
             alert('加载数据失败: ' + (data.error || '未知错误'));
+            downloadBtn.textContent = '下载数据';
         }
     } catch (error) {
         console.error('加载数据失败:', error);
         alert('加载数据失败，请稍后重试');
+        downloadBtn.textContent = '下载数据';
     }
 }
 
@@ -187,6 +237,45 @@ function renderCharts(data) {
     
     // 布林带
     renderBollingerChart(dates, records, closeField);
+    
+    // 成交量
+    renderVolumeChart(dates, records, closeField);
+}
+
+function renderVolumeChart(dates, records, closeField) {
+    // 确定成交量字段
+    let volField = 'volume';
+    if (records[0]['volume'] === undefined && records[0]['成交量'] !== undefined) {
+        volField = '成交量';
+    }
+    
+    // 计算柱状图颜色（涨跌）
+    const volumeColors = records.map((record, index) => {
+        if (index === 0) return '#3b82f6';
+        const prevClose = records[index-1][closeField];
+        const currClose = record[closeField];
+        return currClose >= prevClose ? '#10b981' : '#ef4444';
+    });
+    
+    const option = {
+        tooltip: { trigger: 'axis' },
+        grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+        xAxis: { type: 'category', data: dates, boundaryGap: false },
+        yAxis: { type: 'value', splitLine: { show: true } },
+        series: [
+            {
+                name: '成交量',
+                type: 'bar',
+                data: records.map(r => r[volField]),
+                itemStyle: {
+                    color: function(params) {
+                        return volumeColors[params.dataIndex];
+                    }
+                }
+            }
+        ]
+    };
+    volumeChart.setOption(option);
 }
 
 function renderPriceChart(dates, records, closeField) {
