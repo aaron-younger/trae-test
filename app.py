@@ -147,8 +147,7 @@ def get_summary_stats(df):
 @app.route("/")
 def index():
     """首页"""
-    config = load_config()
-    return render_template("index.html", watchlist=config["watchlist"])
+    return render_template("index_simple.html")
 
 
 @app.route("/api/stock/daily", methods=["GET"])

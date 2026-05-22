@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A股个股数据可视化</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #1f2937;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header { text-align: center; color: white; padding: 20px 0; }
+        header h1 { font-size: 2rem; }
+        .control-panel { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 12px; 
+            margin-bottom: 20px;
+            display: flex; gap: 20px; flex-wrap: wrap;
+        }
+        select, button { 
+            padding: 10px 15px; 
+            border: 1px solid #e5e7eb; 
+            border-radius: 6px; 
+            font-size: 1rem;
+        }
+        button { 
+            background: #3b82f6; 
+            color: white; 
+            border: none; 
+            cursor: pointer;
+        }
+        .stats { 
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 15px; 
+            margin-bottom: 20px;
+        }
+        .stat-card { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 12px; 
+            text-align: center;
+        }
+        .stat-label { color: #6b7280; font-size: 0.9rem; }
+        .stat-value { font-size: 1.5rem; font-weight: 700; }
+        .chart-card { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 12px; 
+            margin-bottom: 20px;
+        }
+        .chart { width: 100%; height: 350px; }
+        .panel { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 12px; 
+            margin-bottom: 20px;
+        }
+        .stock-item { 
+            padding: 10px; 
+            background: #f3f4f6; 
+            border-radius: 8px; 
+            margin-bottom: 8px;
+            cursor: pointer;
+        }
+        .stock-item:hover { background: #3b82f6; color: white; }
+        @media (max-width: 768px) {
+            .stats { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📈 A股个股数据可视化</h1>
+        </header>
+        
+        <div class="control-panel">
+            <select id="stockSelect" onchange="loadData()">
+                <option value="600519.SH">600519.SH 贵州茅台</option>
+                <option value="000001.SZ">000001.SZ 平安银行</option>
+                <option value="000858.SZ">000858.SZ 五粮液</option>
+            </select>
+            <select id="periodSelect" onchange="loadData()">
+                <option value="30">30天</option>
+                <option value="90">90天</option>
+                <option value="180">180天</option>
+                <option value="365" selected>1年</option>
+            </select>
+            <button onclick="loadData()">刷新数据</button>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-label">总收益率</div>
+                <div class="stat-value" id="totalReturn">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">日均收益率</div>
+                <div class="stat-value" id="avgReturn">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">波动率</div>
+                <div class="stat-value" id="volatility">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">夏普比率</div>
+                <div class="stat-value" id="sharpe">-</div>
+            </div>
+        </div>
+        
+        <div class="chart-card">
+            <h3>📊 价格走势</h3>
+            <div id="priceChart" class="chart"></div>
+        </div>
+        
+        <div class="chart-card">
+            <h3>📉 RSI指标</h3>
+            <div id="rsiChart" class="chart"></div>
+        </div>
+        
+        <div class="chart-card">
+            <h3>📊 MACD指标</h3>
+            <div id="macdChart" class="chart"></div>
+        </div>
+    </div>
+
+    <script>
+        let priceChart, rsiChart, macdChart;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            initCharts();
+            loadData();
+        });
+        
+        function initCharts() {
+            priceChart = echarts.init(document.getElementById('priceChart'));
+            rsiChart = echarts.init(document.getElementById('rsiChart'));
+            macdChart = echarts.init(document.getElementById('macdChart'));
+        }
+        
+        async function loadData() {
+            const symbol = document.getElementById('stockSelect').value;
+            const days = document.getElementById('periodSelect').value;
+            
+            try {
+                const response = await fetch(`/api/stock/daily?symbol=${symbol}&days=${days}`);
+                const data = await response.json();
+                if (data.success) {
+                    updateStats(data.stats);
+                    renderCharts(data);
+                } else {
+                    console.error('加载失败:', data.error);
+                }
+            } catch (error) {
+                console.error('加载失败:', error);
+            }
+        }
+        
+        function updateStats(stats) {
+            if (!stats) return;
+            document.getElementById('totalReturn').textContent = stats.total_return.toFixed(2) + '%';
+            document.getElementById('avgReturn').textContent = stats.avg_daily_return.toFixed(3) + '%';
+            document.getElementById('volatility').textContent = stats.std_dev.toFixed(2) + '%';
+            document.getElementById('sharpe').textContent = stats.sharpe_ratio.toFixed(2);
+        }
+        
+        function renderCharts(data) {
+            const records = data.data;
+            const dates = records.map(r => r.date);
+            const closeField = records[0].close !== undefined ? 'close' : '收盘';
+            
+            priceChart.setOption({
+                tooltip: { trigger: 'axis' },
+                grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+                xAxis: { type: 'category', data: dates, boundaryGap: false },
+                yAxis: { type: 'value' },
+                series: [{
+                    name: '收盘价',
+                    type: 'line',
+                    data: records.map(r => r[closeField]),
+                    smooth: true,
+                    lineStyle: { width: 2, color: '#3b82f6' }
+                }]
+            });
+            
+            rsiChart.setOption({
+                tooltip: { trigger: 'axis' },
+                grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+                xAxis: { type: 'category', data: dates, boundaryGap: false },
+                yAxis: { type: 'value', min: 0, max: 100 },
+                series: [{
+                    name: 'RSI',
+                    type: 'line',
+                    data: records.map(r => r.rsi),
+                    smooth: true,
+                    lineStyle: { width: 2 },
+                    markLine: {
+                        data: [
+                            { yAxis: 70, lineStyle: { color: '#ef4444', type: 'dashed' } },
+                            { yAxis: 30, lineStyle: { color: '#10b981', type: 'dashed' } }
+                        ]
+                    }
+                }]
+            });
+            
+            macdChart.setOption({
+                tooltip: { trigger: 'axis' },
+                grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+                xAxis: { type: 'category', data: dates, boundaryGap: false },
+                yAxis: { type: 'value' },
+                series: [
+                    { name: 'MACD', type: 'line', data: records.map(r => r.macd), smooth: true, lineStyle: { width: 2, color: '#3b82f6' } },
+                    { name: 'Signal', type: 'line', data: records.map(r => r.signal), smooth: true, lineStyle: { width: 2, color: '#f59e0b' } },
+                    { name: 'Histogram', type: 'bar', data: records.map(r => r.histogram), itemStyle: { color: p => p.value >= 0 ? '#10b981' : '#ef4444' } }
+                ]
+            });
+        }
+    </script>
+</body>
+</html>
