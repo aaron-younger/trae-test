@@ -515,10 +515,18 @@ def get_index_kline_data(code: str, days: int = 60) -> list:
         import json
         data = json.loads(data_text)
         
-        qfqday = data.get("data", {}).get(code, {}).get("qfqday", [])
+        code_data = data.get("data", {}).get(code, {})
         
-        if not qfqday:
-            qfqday = data.get("data", {}).get(code, {}).get("day", [])
+        # 处理不同的数据格式
+        if isinstance(code_data, dict):
+            qfqday = code_data.get("qfqday", [])
+            if not qfqday:
+                qfqday = code_data.get("day", [])
+        elif isinstance(code_data, list):
+            # 有些指数返回的是列表格式
+            qfqday = code_data
+        else:
+            qfqday = []
         
         closes = []
         if qfqday:
@@ -551,8 +559,8 @@ def get_industry_indices():
         {"codes": ["sh000905"], "name": "中证500"},
         {"codes": ["sh000852"], "name": "中证1000"},
         {"codes": ["sz399101"], "name": "中证2000"},
-        {"codes": ["szH30269", "shH30269"], "name": "红利低波动"},
-        {"codes": ["sz930713", "CSI930713", "sh930713"], "name": "CS人工智能"},
+        {"codes": ["szH30269", "shH30269", "shH30263", "shH30271", "szH30271"], "name": "红利低波动"},
+        {"codes": ["sz930713", "CSI930713", "sh930713", "sh931071", "sz931071", "shCSIAI"], "name": "CS人工智能"},
         {"codes": ["sz980017"], "name": "国证芯片"},
         {"codes": ["sz931743", "CSI931743", "sh931743"], "name": "半导体材料设备"}
     ]
