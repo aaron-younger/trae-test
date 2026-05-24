@@ -502,6 +502,46 @@ def get_hot_industries():
         "source": "暂无数据"
     })
 
+def get_index_kline_data(code: str, days: int = 60) -> list:
+    """获取指数的历史K线数据"""
+    import requests
+    url = f"https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?_var=kline_dayqfq&param={code},day,,,{days},qfq"
+    
+    try:
+        response = requests.get(url, timeout=10)
+        data_text = response.text
+        
+        if "kline_dayqfq" in data_text:
+            data_text = data_text[data_text.index("=") + 1:]
+        
+        import json
+        data = json.loads(data_text)
+        
+        qfqday = data.get("data", {}).get(code, {}).get("qfqday", [])
+        
+        if not qfqday:
+            qfqday = data.get("data", {}).get(code, {}).get("day", [])
+        
+        closes = []
+        if qfqday:
+            for candle in qfqday:
+                if len(candle) >= 3 and candle[2]:
+                    try:
+                        closes.append(float(candle[2]))
+                    except (ValueError, IndexError):
+                        continue
+        
+        return closes
+    except Exception as e:
+        print(f"获取{code} K线数据失败: {e}")
+        return []
+
+def calculate_ma_from_closes(closes: list, period: int) -> float:
+    """根据收盘价列表计算MA值"""
+    if len(closes) < period:
+        return None
+    return round(sum(closes[-period:]) / period, 2)
+
 @app.route("/api/market-indices", methods=["GET"])
 def get_market_indices():
     """获取大盘指数数据（上证、深证、创业板、科创板）"""
@@ -516,6 +556,7 @@ def get_market_indices():
     result = []
     for index_info in indices:
         try:
+            # 获取实时数据
             url = f"https://qt.gtimg.cn/q={index_info['code']}"
             response = requests.get(url, timeout=5)
             data_text = response.text
@@ -525,25 +566,36 @@ def get_market_indices():
             
             parts = data_text.split("=")[1].strip('"').split("~")
             
-            if len(parts) > 3:
+            current_price = None
+            yesterday_close = None
+            change_pct = 0
+            
+            if len(parts) > 4:
                 current_price = float(parts[3]) if parts[3] else None
-                yesterday_close = float(parts[4]) if (len(parts) > 4 and parts[4]) else None
-                change_pct = ((current_price - yesterday_close) / yesterday_close * 100) if (current_price and yesterday_close and yesterday_close != 0) else 0
-                
-                # 如果无法获取真实MA20，使用模拟数据
-                # 实际项目中可以通过历史数据计算
-                ma20 = current_price * 0.98 if current_price else None
-                
-                above_ma20 = current_price > ma20 if (current_price is not None and ma20 is not None) else False
-                
-                result.append({
-                    "code": index_info["code"],
-                    "name": index_info["name"],
-                    "price": current_price,
-                    "change": change_pct,
-                    "ma20": ma20,
-                    "above_ma20": above_ma20
-                })
+                yesterday_close = float(parts[4]) if parts[4] else None
+                if current_price and yesterday_close and yesterday_close != 0:
+                    change_pct = ((current_price - yesterday_close) / yesterday_close * 100)
+            
+            # 获取K线数据计算MA20
+            closes = get_index_kline_data(index_info["code"], 60)
+            ma20 = calculate_ma_from_closes(closes, 20)
+            
+            # 如果获取不到真实MA20，至少确保有一个合理的计算方式
+            if ma20 is None and current_price and len(closes) >= 1:
+                # 使用可用的历史数据计算简单移动平均
+                available_days = min(20, len(closes))
+                ma20 = round(sum(closes[-available_days:]) / available_days, 2)
+            
+            above_ma20 = current_price > ma20 if (current_price is not None and ma20 is not None) else False
+            
+            result.append({
+                "code": index_info["code"],
+                "name": index_info["name"],
+                "price": current_price,
+                "change": change_pct,
+                "ma20": ma20,
+                "above_ma20": above_ma20
+            })
         except Exception as e:
             print(f"获取{index_info['name']}数据失败: {e}")
             result.append({
