@@ -540,6 +540,95 @@ def calculate_ma_from_closes(closes: list, period: int) -> float:
         return None
     return round(sum(closes[-period:]) / period, 2)
 
+@app.route("/api/industry-indices", methods=["GET"])
+def get_industry_indices():
+    """获取行业/主题指数数据"""
+    import requests
+    indices = [
+        {"code": "usNDX", "name": "纳斯达克100", "available_source": True},
+        {"code": "hkHSTECH", "name": "恒生科技", "available_source": True},
+        {"code": "sh000300", "name": "沪深300", "available_source": True},
+        {"code": "sh000905", "name": "中证500", "available_source": True},
+        {"code": "sh000852", "name": "中证1000", "available_source": True},
+        {"code": "sz399101", "name": "中证2000", "available_source": True},
+        {"code": "shH30269", "name": "红利低波动", "available_source": False},
+        {"code": "sh930713", "name": "CS人工智能", "available_source": False},
+        {"code": "sz980017", "name": "国证芯片", "available_source": True},
+        {"code": "sh931743", "name": "半导体材料设备", "available_source": False}
+    ]
+    
+    result = []
+    for index_info in indices:
+        try:
+            url = f"https://qt.gtimg.cn/q={index_info['code']}"
+            response = requests.get(url, timeout=5)
+            data_text = response.text
+            
+            if "v_" in data_text:
+                data_text = data_text[data_text.index("v_"):]
+            
+            parts = data_text.split("=")[1].strip('"').split("~")
+            
+            current_price = None
+            yesterday_close = None
+            change_pct = None
+            
+            if len(parts) > 4:
+                current_price = float(parts[3]) if parts[3] else None
+                yesterday_close = float(parts[4]) if parts[4] else None
+                if current_price and yesterday_close and yesterday_close != 0:
+                    change_pct = round((current_price - yesterday_close) / yesterday_close * 100, 2)
+            
+            closes = get_index_kline_data(index_info["code"], 60)
+            ma20 = calculate_ma_from_closes(closes, 20)
+            
+            if ma20 is None and current_price and len(closes) >= 1:
+                available_days = min(20, len(closes))
+                ma20 = round(sum(closes[-available_days:]) / available_days, 2)
+            
+            above_ma20 = current_price > ma20 if (current_price is not None and ma20 is not None) else None
+            
+            result.append({
+                "code": index_info["code"],
+                "name": index_info["name"],
+                "price": current_price,
+                "change": change_pct,
+                "ma20": ma20,
+                "above_ma20": above_ma20,
+                "available": True
+            })
+        except Exception as e:
+            print(f"获取{index_info['name']}数据失败: {e}")
+            result.append({
+                "code": index_info["code"],
+                "name": index_info["name"],
+                "price": None,
+                "change": None,
+                "ma20": None,
+                "above_ma20": None,
+                "available": False,
+                "message": "暂无可用数据源"
+            })
+    
+    for index_info in indices:
+        if not index_info["available_source"] and not any(item["code"] == index_info["code"] for item in result):
+            result.append({
+                "code": index_info["code"],
+                "name": index_info["name"],
+                "price": None,
+                "change": None,
+                "ma20": None,
+                "above_ma20": None,
+                "available": False,
+                "message": "暂无可用数据源"
+            })
+    
+    return jsonify({
+        "success": True,
+        "data": result,
+        "source": "腾讯财经"
+    })
+
 @app.route("/api/market-indices", methods=["GET"])
 def get_market_indices():
     """获取大盘指数数据（上证、深证、创业板、科创板）"""
