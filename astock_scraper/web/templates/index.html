@@ -1340,7 +1340,7 @@
                         <span style="font-size: 11px; color: var(--text-muted);">数据来源：腾讯财经</span>
                     </div>
                     <div class="card-body">
-                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;" id="industryIndicesContainer"></div>
+                        <div style="display: flex; flex-direction: column; gap: 8px;" id="industryIndicesContainer"></div>
                     </div>
                 </div>
 
@@ -1833,38 +1833,61 @@
                     const indices = result.data;
                     const container = document.getElementById('industryIndicesContainer');
                     
-                    if (indices.length === 0) {
-                        container.innerHTML = `<div style="text-align: center; padding: 16px; color: var(--text-muted); font-size: 13px;">暂无行业指数数据</div>`;
-                        return;
-                    }
+                    // 定义固定的10个指数名称
+                    const fixedIndices = [
+                        '纳斯达克100',
+                        '恒生科技',
+                        '沪深300',
+                        '中证500',
+                        '中证1000',
+                        '中证2000',
+                        '红利低波动',
+                        'CS人工智能',
+                        '国证芯片',
+                        '半导体材料设备'
+                    ];
                     
-                    const displayIndices = indices.slice(0, 10);
+                    // 创建索引映射，方便查找数据
+                    const indexMap = new Map(indices.map(idx => [idx.name, idx]));
                     
-                    container.innerHTML = displayIndices.map(index => {
-                        const isAboveMA20 = index.above_ma20;
-                        const lightColor = isAboveMA20 ? 'var(--accent-red)' : 'var(--accent-green)';
-                        const lightShadow = isAboveMA20 ? '0 0 20px rgba(239, 68, 68, 0.5)' : '0 0 20px rgba(34, 197, 94, 0.5)';
-                        const statusText = isAboveMA20 ? '多头' : '空头';
-                        const change = index.change || 0;
-                        const isUp = change >= 0;
-                        const changeColor = isUp ? 'var(--accent-red)' : 'var(--accent-green)';
+                    container.innerHTML = fixedIndices.map(name => {
+                        const index = indexMap.get(name);
+                        const hasData = index && (index.price !== null && index.price !== undefined || index.ma20 !== null && index.ma20 !== undefined);
                         
-                        return `
-                            <div style="background: var(--bg-tertiary); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px;">
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <span style="font-weight: 600; font-size: 13px;">${index.name}</span>
-                                    <div style="width: 12px; height: 12px; border-radius: 50%; background: ${lightColor}; box-shadow: ${lightShadow};"></div>
+                        if (hasData) {
+                            const isAboveMA20 = index.above_ma20;
+                            const lightColor = isAboveMA20 !== null ? (isAboveMA20 ? 'var(--accent-red)' : 'var(--accent-green)') : 'var(--text-muted)';
+                            const lightShadow = isAboveMA20 !== null ? (isAboveMA20 ? '0 0 12px rgba(239, 68, 68, 0.4)' : '0 0 12px rgba(34, 197, 94, 0.4)') : 'none';
+                            const change = index.change || 0;
+                            const isUp = change >= 0;
+                            const changeColor = isUp ? 'var(--accent-red)' : 'var(--accent-green)';
+                            
+                            return `
+                                <div style="background: var(--bg-tertiary); border-radius: 6px; padding: 6px 10px; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s ease;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <div style="width: 7px; height: 7px; border-radius: 50%; background: ${lightColor}; box-shadow: ${lightShadow};"></div>
+                                        <span style="font-weight: 500; font-size: 12px; color: var(--text-primary);">${name}</span>
+                                    </div>
+                                    <div style="display: flex; align-items: baseline; gap: 6px;">
+                                        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; color: var(--text-primary);">${index.price?.toFixed(2) || '--'}</span>
+                                        <span style="font-size: 11px; color: ${changeColor}; font-weight: 500;">${index.change !== null && index.change !== undefined ? (isUp ? '+' : '') + index.change.toFixed(2) + '%' : '--'}</span>
+                                    </div>
                                 </div>
-                                <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 700;">${index.price?.toFixed(2) || 'N/A'}</span>
-                                    <span style="font-size: 12px; color: ${changeColor}; font-weight: 500;">${isUp ? '+' : ''}${change?.toFixed(2) || '0.00'}%</span>
+                            `;
+                        } else {
+                            return `
+                                <div style="background: var(--bg-tertiary); border-radius: 6px; padding: 6px 10px; display: flex; justify-content: space-between; align-items: center; opacity: 0.6;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <div style="width: 7px; height: 7px; border-radius: 50%; background: var(--border-color); box-shadow: none;"></div>
+                                        <span style="font-weight: 400; font-size: 12px; color: var(--text-muted);">${name}</span>
+                                    </div>
+                                    <div style="display: flex; align-items: baseline; gap: 6px;">
+                                        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-muted);">--</span>
+                                        <span style="font-size: 11px; color: var(--text-muted);">--</span>
+                                    </div>
                                 </div>
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <span style="font-size: 11px; color: var(--text-muted);">MA20: ${index.ma20?.toFixed(2) || 'N/A'}</span>
-                                    <span style="font-size: 11px; padding: 2px 8px; border-radius: 4px; background: ${isAboveMA20 ? 'rgba(239, 68, 68, 0.2)' : 'rgba(34, 197, 94, 0.2)'}; color: ${lightColor}; font-weight: 500;">${statusText}</span>
-                                </div>
-                            </div>
-                        `;
+                            `;
+                        }
                     }).join('');
                 }
             } catch (error) {
