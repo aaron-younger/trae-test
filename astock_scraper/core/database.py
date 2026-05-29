@@ -119,8 +119,18 @@ class Database:
             except sqlite3.OperationalError:
                 pass
     
-    def save_stock(self, stock: Stock) -> bool:
+    def save_stock(self, stock: Stock, preserve_favorite: bool = True) -> bool:
         try:
+            existing_favorite = None
+            if preserve_favorite:
+                existing = self.get_stock(stock.code)
+                if existing:
+                    existing_favorite = existing.favorite
+            
+            favorite_value = stock.favorite
+            if preserve_favorite and existing_favorite is not None:
+                favorite_value = existing_favorite
+            
             with sqlite3.connect(self.db_path) as conn:
                 conn.execute("""
                     INSERT OR REPLACE INTO stocks 
@@ -133,7 +143,7 @@ class Database:
                     ",".join(stock.concepts) if stock.concepts else "",
                     ",".join(stock.products) if stock.products else "",
                     stock.pe, stock.pb, stock.update_time or datetime.now().isoformat(),
-                    1 if stock.favorite else 0
+                    1 if favorite_value else 0
                 ))
             return True
         except Exception as e:
