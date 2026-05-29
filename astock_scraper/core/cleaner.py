@@ -89,6 +89,8 @@ class DataDeduplicator:
             existing.products = new.products
         
         existing.update_time = new.update_time or existing.update_time
+        # 保留原有的 favorite 状态
+        # existing.favorite 保持不变，不被 new.favorite 覆盖
         return existing
 
 class CleanerPipeline:

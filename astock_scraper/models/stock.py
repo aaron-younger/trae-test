@@ -16,7 +16,7 @@ class Stock:
     pe: Optional[float] = None
     pb: Optional[float] = None
     update_time: Optional[str] = None
-    favorite: bool = False
+    favorite: Optional[bool] = None
     
     def __post_init__(self):
         if self.concepts is None:

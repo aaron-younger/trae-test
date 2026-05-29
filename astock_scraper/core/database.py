@@ -119,17 +119,17 @@ class Database:
             except sqlite3.OperationalError:
                 pass
     
-    def save_stock(self, stock: Stock, preserve_favorite: bool = True) -> bool:
+    def save_stock(self, stock: Stock) -> bool:
         try:
-            existing_favorite = None
-            if preserve_favorite:
+            # 如果 favorite 是 None，表示未设置，从数据库读取现有值
+            favorite_value = stock.favorite
+            if favorite_value is None:
                 existing = self.get_stock(stock.code)
                 if existing:
-                    existing_favorite = existing.favorite
-            
-            favorite_value = stock.favorite
-            if preserve_favorite and existing_favorite is not None:
-                favorite_value = existing_favorite
+                    favorite_value = existing.favorite
+            # 如果仍然是 None（新股票），默认设为 False
+            if favorite_value is None:
+                favorite_value = False
             
             with sqlite3.connect(self.db_path) as conn:
                 conn.execute("""
